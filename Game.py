@@ -33,11 +33,11 @@ class Game(): #Main Game class. Initialising a Game object runs the game
     self.createMap()
     self.currentRoom = [0, 0]
 
+    for room in self.map:
+      print(self.map[room].location)
+
     px.init(640, 360)
     px.run(self.update, self.draw)
-
-  def varHash(self, var): #Not used yet
-    return hash([self.getSeed, var])
 
   def makeRoom(self, loc, roomType="Normal"): #Makes a room and checks if more rooms are due to be added
     self.map[str(loc)] = Room(location=loc, totalRooms=self.totalRooms, map=self.map, toAdd=self.toAdd, roomType=roomType)
@@ -64,7 +64,6 @@ class Game(): #Main Game class. Initialising a Game object runs the game
     self.makeRoom([0, 0], roomType="Node")
     self.makeRoom([0, 1], roomType="Boss")
     self.toAdd.remove([0, 1])
-    print(self.toAdd)
     while len(self.toAdd):
       self.makeRoom(self.toAdd[0])
       self.toAdd = self.toAdd[1:]
@@ -81,10 +80,19 @@ class Game(): #Main Game class. Initialising a Game object runs the game
       upMost = max(upMost, loc[1])
       bottomMost = min(bottomMost, loc[1])
 
-    scale = min(280/(rightMost-leftMost), 280/(upMost-bottomMost)) #Got here-----------------------------------------------------
-    pass
+    scale = 280/max((rightMost-leftMost), (upMost-bottomMost))
+    centre = [0.0, 0.0]
+    centre[0] = -leftMost*scale
+    centre[1] = -bottomMost*scale
+    for room in self.map:
+      loc = [self.map[room].location[0]*scale + centre[0], self.map[room].location[1]*scale + centre[1]]
+      colour = px.COLOR_GREEN
+      if self.map[room].roomType == "Node":
+        colour = px.COLOR_LIGHT_BLUE
+      elif self.map[room].roomType == "Boss":
+        colour = px.COLOR_RED
+      px.rect(loc[0], 360-loc[1]-scale, scale, scale, colour)
     
-
   def update(self):
     self.map[str(self.currentRoom)].update()
 
@@ -98,12 +106,13 @@ class Room(): #Room class
     self.location = location
     self.hash = hash(str(location) + str(datetime.now())[:10])
     self.makeConnections(location, totalRooms, map, toAdd, roomType)
+    self.roomType = roomType
 
     self.tiles = [["" for i in range(9)] for j in range(9)]
 
   def choiceConnection(self, totalRooms, roomsAdded, direction=''): #Chooses what type of connection to put
     rng.seed(hash(self.hash + direction + "Change"))
-    probability = 0.8*( 1-e**((-1)*totalRooms*(totalRooms - roomsAdded)) )
+    probability = max(0.8*( 1-e**((-1)*totalRooms*(totalRooms - roomsAdded)) ), 0.01)
     if rng.binomialvariate(n=1, p=probability):
       if rng.sample(range(3), 1):
         return "Arch"
