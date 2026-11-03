@@ -1,7 +1,7 @@
 # Generic Dungeon Game - The whole game
 # Created - 31/10/2026
 # Owner - Xia34_
-# Last updated - 01/11/2026
+# Last updated - 03/11/2026
 
 # Imports
 from hashlib import sha3_256
@@ -151,9 +151,9 @@ class Room(): #Room class
   def choiceConnection(self, totalRooms, roomsAdded, direction=''): #Chooses what type of connection to put
     rng.seed(hash(self.hash + direction + 'Change'))
     if totalRooms > roomsAdded:
-      probability = 0.8*( 1-e**((-1)*totalRooms*(totalRooms - roomsAdded)) )
-      if rng.binomialvariate(n=1, p=probability):
-        if rng.sample(range(0, 5), 1)[0]:
+      probability = 1-e**((-1)*(totalRooms - roomsAdded)*2/totalRooms)
+      if rng.binomialvariate(p=probability):
+        if rng.binomialvariate(p=0.8):
           return 'Arch'
         return 'Seamless'
     return 'None'
@@ -195,17 +195,17 @@ class Room(): #Room class
 
       #50% chance for each of the rooms to have a link
       rng.seed(hash(str(self.hash) + 'South'))
-      if rng.sample(range(2), 1)[0]:
+      if rng.binomialvariate(p=0.8):
         self.South = 'Arch'
       else:
         self.South = 'None'
       rng.seed(hash(str(self.hash) + 'West'))
-      if rng.sample(range(2), 1)[0]:
+      if rng.binomialvariate(p=0.8):
         self.West = 'Arch'
       else:
         self.West = 'None'
       rng.seed(hash(str(self.hash) + 'East'))
-      if rng.sample(range(2), 1)[0]:
+      if rng.binomialvariate(p=0.8):
         self.East = 'Arch'
       else:
         self.East = 'None'
