@@ -18,8 +18,8 @@ def hash(string): # The inbuilt python hash method is finicky
 class Game(): #Main Game class. Initialising a Game object runs the game
   def __init__(self):
     # constants
-    self.SCREENWIDTH = 16*120#640
-    self.SCREENHEIGHT = 9*120#360
+    self.SCREENWIDTH = 640*2
+    self.SCREENHEIGHT = 360*2
     self.TIMECONSTANT = 2.75
 
     self.expectedLength = 15 # int(input('How long will the game be? (minutes): '))
@@ -86,7 +86,7 @@ class Game(): #Main Game class. Initialising a Game object runs the game
     elif room.roomFound == True:
       colour = px.COLOR_GREEN
 
-    px.rect(loc[0], self.SCREENHEIGHT-loc[1], scale*0.8, scale*0.8, colour) #Make the box
+    px.rect(loc[0], self.SCREENHEIGHT - loc[1], scale*0.8, scale*0.8, colour) #Make the box
     
     if room.North in ['Arch', 'Boss Door', 'Self Locking Door']:
       px.rect(loc[0]+scale*0.3, self.SCREENHEIGHT-loc[1]-scale*0.125, scale*0.2, scale*0.325, colour)
@@ -107,6 +107,9 @@ class Game(): #Main Game class. Initialising a Game object runs the game
       px.rect(loc[0]-scale*0.125, self.SCREENHEIGHT-loc[1]+scale*0.3, scale*0.225, scale*0.2, colour)
     elif room.West == 'Seamless':
       px.rect(loc[0]-scale*0.125, self.SCREENHEIGHT-loc[1], scale*0.225, scale*0.8, colour)
+
+    if room.location == self.currentRoom:
+      px.circ(x=loc[0] + scale*0.4, y=self.SCREENHEIGHT - loc[1] + scale*0.4, r=scale*0.15, col=px.COLOR_LIGHT_BLUE)
 
   def drawMap(self): # We have 280:280px to work with to draw the map
     px.rect(0,self.SCREENHEIGHT*2/9,self.SCREENHEIGHT*7/9,self.SCREENHEIGHT*7/9,px.COLOR_NAVY)
@@ -130,11 +133,32 @@ class Game(): #Main Game class. Initialising a Game object runs the game
     
     for room in self.map:
       self.drawMapRoom(scale, centre, room)
+
+  def devTools(self): #To test room generation and drawings and stuff
+    if False: #False for devTools, True for normal
+      return
+
+    if px.btn(px.KEY_SPACE):
+      if px.btnp(px.KEY_UP):
+        if str([self.currentRoom[0], self.currentRoom[1] + 1]) in self.map:
+          self.currentRoom = [self.currentRoom[0], self.currentRoom[1] + 1]
+      if px.btnp(px.KEY_DOWN):
+        if str([self.currentRoom[0], self.currentRoom[1] - 1]) in self.map:
+          self.currentRoom = [self.currentRoom[0], self.currentRoom[1] - 1]
+      if px.btnp(px.KEY_LEFT):
+        if str([self.currentRoom[0] - 1, self.currentRoom[1]]) in self.map:
+          self.currentRoom = [self.currentRoom[0] - 1, self.currentRoom[1]]
+      if px.btnp(px.KEY_RIGHT):
+        if str([self.currentRoom[0] + 1, self.currentRoom[1]]) in self.map:
+          self.currentRoom = [self.currentRoom[0] + 1, self.currentRoom[1]]
     
   def update(self):
+    self.devTools()
     self.map[str(self.currentRoom)].update()
 
   def draw(self):
+    px.cls(px.COLOR_BLACK)
+    
     self.map[str(self.currentRoom)].draw(self.SCREENHEIGHT, self.SCREENWIDTH)
 
     self.drawMap()
@@ -197,17 +221,17 @@ class Room(): #Room class
 
       #50% chance for each of the rooms to have a link
       rng.seed(hash(str(self.hash) + 'South'))
-      if rng.binomialvariate(p=0.8):
+      if rng.binomialvariate(p=0.9):
         self.South = 'Arch'
       else:
         self.South = 'None'
       rng.seed(hash(str(self.hash) + 'West'))
-      if rng.binomialvariate(p=0.8):
+      if rng.binomialvariate(p=0.9):
         self.West = 'Arch'
       else:
         self.West = 'None'
       rng.seed(hash(str(self.hash) + 'East'))
-      if rng.binomialvariate(p=0.8):
+      if rng.binomialvariate(p=0.9):
         self.East = 'Arch'
       else:
         self.East = 'None'
@@ -232,28 +256,25 @@ class Room(): #Room class
     self.tiles[8][0] = 'Corner Inner'
 
     #Connections
-    if self.North == 'Arch':
-      self.tiles[4][8] = 'Arch'
-    elif self.North == 'Seamless':
+    if self.North == 'Seamless':
       for x in range(1, 8):
         self.tiles[x][8] = 'Tile'
       self.tiles[0][8] = 'Wall Left'
       self.tiles[8][8] = 'Wall Right'
+    elif self.North != 'None':
+      self.tiles[4][8] = self.North
 
-    if self.South == 'Arch':
-      self.tiles[4][0] = 'Arch'
-    elif self.South == 'Seamless':
+    if self.South == 'Seamless':
       for x in range(1, 8):
         self.tiles[x][0] = 'Tile'
       self.tiles[0][0] = 'Wall Left'
       self.tiles[8][0] = 'Wall Right'
+    elif self.South != 'None':
+      self.tiles[4][0] = self.South
 
-    if self.West == 'Arch':
-      self.tiles[0][4] = 'Arch'
-    elif self.West == 'Seamless':
+    if self.West == 'Seamless':
       for y in range(1, 8):
         self.tiles[0][y] = 'Tile'
-      
       if self.tiles[0][0] == 'Wall Left':
         self.tiles[0][0] = 'Corner Outer'
       else:
@@ -262,10 +283,10 @@ class Room(): #Room class
         self.tiles[0][8] = 'Corner Outer'
       else:
         self.tiles[0][8] = 'Wall Top'
+    elif self.West != 'None':
+      self.tiles[0][4] = self.West
 
-    if self.East == 'Arch':
-      self.tiles[8][4] = 'Arch'
-    elif self.West == 'Seamless':
+    if self.East == 'Seamless':
       for y in range(1, 8):
         self.tiles[8][y] = 'Tile'
       if self.tiles[8][8] == 'Wall Right':
@@ -276,14 +297,17 @@ class Room(): #Room class
         self.tiles[8][0] = 'Corner Outer'
       else:
         self.tiles[8][0] = 'Wall Bottom'
+    elif self.East != 'None':
+      self.tiles[8][4] = self.East
 
   def drawTile(self, x, y, SCREENHEIGHT, SCREENWIDTH):
-    locX = SCREENHEIGHT*7/9 + x*SCREENHEIGHT/9 + SCREENHEIGHT/18 - SCREENHEIGHT/9/16
-    locY = SCREENHEIGHT     - y*SCREENHEIGHT/9 - SCREENHEIGHT/18 - SCREENHEIGHT/9/16
+    locX = SCREENHEIGHT*7/9 + x*SCREENHEIGHT/9 + SCREENHEIGHT/18 - SCREENHEIGHT/9/8 + 2
+    locY = SCREENHEIGHT     - y*SCREENHEIGHT/9 - SCREENHEIGHT/18 - SCREENHEIGHT/9/8 + 2
     img = 0
     w=16
     h=16
     scale=SCREENHEIGHT/9/16
+
     if self.tiles[x][y] == 'Tile':
       px.blt(x=locX, y=locY, img=img, u=16, v=0, w=w, h=h, colkey=px.COLOR_BLACK, scale=scale)
     elif self.tiles[x][y] == 'Corner Inner':
@@ -303,6 +327,30 @@ class Room(): #Room class
       px.blt(x=locX, y=locY, img=img, u=48, v=0, w=w, h=h, colkey=px.COLOR_BLACK, scale=scale, rotate=270)
     elif self.tiles[x][y] == 'Wall Right':
       px.blt(x=locX, y=locY, img=img, u=48, v=0, w=w, h=h, colkey=px.COLOR_BLACK, scale=scale, rotate=90)
+
+    elif self.tiles[x][y] in ['Arch', 'Boss Door', 'Self Locking Door']:
+      if self.tiles[x][y] == 'Arch':
+        u, v = 0, 32
+      else:
+        u, v = 16, 32
+      if y == 8:
+        px.blt(x=locX, y=locY, img=img, u=u, v=v, w=w, h=h, colkey=px.COLOR_WHITE, scale=scale)
+      elif y == 0:
+        px.blt(x=locX, y=locY, img=img, u=u, v=v, w=w, h=h, colkey=px.COLOR_WHITE, scale=scale, rotate=180)
+      elif x == 0:
+        px.blt(x=locX, y=locY, img=img, u=u, v=v, w=w, h=h, colkey=px.COLOR_WHITE, scale=scale, rotate=270)
+      elif x == 8:
+        px.blt(x=locX, y=locY, img=img, u=u, v=v, w=w, h=h, colkey=px.COLOR_WHITE, scale=scale, rotate=90)
+
+    elif self.tiles[x][y] == 'Corner Outer':
+      if x == 0 and y == 0:
+        px.blt(x=locX, y=locY, img=img, u=16, v=16, w=-w, h=-h, colkey=px.COLOR_WHITE, scale=scale)
+      elif x == 8 and y == 0:
+        px.blt(x=locX, y=locY, img=img, u=16, v=16, w=w, h=h, colkey=px.COLOR_WHITE, scale=scale, rotate=90)
+      elif x == 0 and y == 8:
+        px.blt(x=locX, y=locY, img=img, u=16, v=16, w=w, h=h, colkey=px.COLOR_WHITE, scale=scale, rotate=270)
+      else:
+        px.blt(x=locX, y=locY, img=img, u=16, v=16, w=w, h=h, colkey=px.COLOR_WHITE, scale=scale)
 
   def update(self):
     pass
