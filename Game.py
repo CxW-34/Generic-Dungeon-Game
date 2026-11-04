@@ -1,7 +1,7 @@
 # Generic Dungeon Game - The whole game
 # Created - 31/10/2026
 # Owner - Xia34_
-# Last updated - 03/11/2026
+# Last updated - 04/11/2026
 
 # Imports
 from hashlib import sha3_256
@@ -17,14 +17,14 @@ def hash(string): # The inbuilt python hash method is finicky
 #Classes
 class Game(): #Main Game class. Initialising a Game object runs the game
   def __init__(self):
-# constants
-    self.SCREENWIDTH = 2560#640
-    self.SCREENHEIGHT = 1440#360
+    # constants
+    self.SCREENWIDTH = 16*120#640
+    self.SCREENHEIGHT = 9*120#360
     self.TIMECONSTANT = 2.75
 
     self.expectedLength = 15 # int(input('How long will the game be? (minutes): '))
 
-# Initialise everything
+    # Initialise everything
     self.seed = hash(str(datetime.now())[:10]) # yyyy-mm-dd hh:mm:ss.ssssss
     self.totalRooms = int(self.TIMECONSTANT*self.expectedLength)
     self.map = {}
@@ -135,7 +135,7 @@ class Game(): #Main Game class. Initialising a Game object runs the game
     self.map[str(self.currentRoom)].update()
 
   def draw(self):
-    self.map[str(self.currentRoom)].draw()
+    self.map[str(self.currentRoom)].draw(self.SCREENHEIGHT, self.SCREENWIDTH)
 
     self.drawMap()
 
@@ -223,8 +223,9 @@ class Room(): #Room class
     for i in range(1, 8): #Make walls
       self.tiles[0][i] = 'Wall Left'
       self.tiles[8][i] = 'Wall Right'
-      self.tiles[i][0] = 'Wall Top'
-      self.tiles[i][8] = 'Wall Bottom'
+      self.tiles[i][0] = 'Wall Bottom'
+      self.tiles[i][8] = 'Wall Top'
+    
     self.tiles[0][0] = 'Corner Inner'
     self.tiles[8][8] = 'Corner Inner'
     self.tiles[0][8] = 'Corner Inner'
@@ -232,53 +233,53 @@ class Room(): #Room class
 
     #Connections
     if self.North == 'Arch':
-      self.tiles[4][0] = 'Arch'
+      self.tiles[4][8] = 'Arch'
     elif self.North == 'Seamless':
-      for i in range(1, 8):
-        self.tiles[0][i] = 'Tile'
-      self.tiles[0][0] = 'Wall Left'
-      self.tiles[0][8] = 'Wall Right'
+      for x in range(1, 8):
+        self.tiles[x][8] = 'Tile'
+      self.tiles[0][8] = 'Wall Left'
+      self.tiles[8][8] = 'Wall Right'
 
     if self.South == 'Arch':
-      self.tiles[4][8] = 'Arch'
+      self.tiles[4][0] = 'Arch'
     elif self.South == 'Seamless':
-      for i in range(1, 8):
-        self.tiles[8][i] = 'Tile'
-      self.tiles[8][0] = 'Wall Left'
-      self.tiles[8][8] = 'Wall Right'
+      for x in range(1, 8):
+        self.tiles[x][0] = 'Tile'
+      self.tiles[0][0] = 'Wall Left'
+      self.tiles[8][0] = 'Wall Right'
 
     if self.West == 'Arch':
       self.tiles[0][4] = 'Arch'
     elif self.West == 'Seamless':
-      for i in range(1, 8):
-        self.tiles[i][0] = 'Tile'
+      for y in range(1, 8):
+        self.tiles[0][y] = 'Tile'
       
       if self.tiles[0][0] == 'Wall Left':
         self.tiles[0][0] = 'Corner Outer'
       else:
-          self.tiles[0][0] = 'Wall Top'
-      if self.tiles[8][0] == 'Wall Left':
-        self.tiles[8][0] = 'Corner Outer'
+          self.tiles[0][0] = 'Wall Bottom'
+      if self.tiles[0][8] == 'Wall Left':
+        self.tiles[0][8] = 'Corner Outer'
       else:
-        self.tiles[8][0] = 'Wall Bottom'
+        self.tiles[0][8] = 'Wall Top'
 
     if self.East == 'Arch':
       self.tiles[8][4] = 'Arch'
     elif self.West == 'Seamless':
-      for i in range(1, 8):
-        self.tiles[i][8] = 'Tile'
-      if self.tiles[0][8] == 'Wall Right':
-        self.tiles[0][8] = 'Corner Outer'
-      else:
-        self.tiles[0][8] = 'Wall Top'
+      for y in range(1, 8):
+        self.tiles[8][y] = 'Tile'
       if self.tiles[8][8] == 'Wall Right':
         self.tiles[8][8] = 'Corner Outer'
       else:
-        self.tiles[8][8] = 'Wall Bottom'
+        self.tiles[8][8] = 'Wall Top'
+      if self.tiles[8][0] == 'Wall Right':
+        self.tiles[8][0] = 'Corner Outer'
+      else:
+        self.tiles[8][0] = 'Wall Bottom'
 
   def drawTile(self, x, y, SCREENHEIGHT, SCREENWIDTH):
-    locX = SCREENHEIGHT*7/9+SCREENHEIGHT/18+x*SCREENHEIGHT/9
-    locY = y*SCREENHEIGHT/9+SCREENHEIGHT/18
+    locX = SCREENHEIGHT*7/9 + x*SCREENHEIGHT/9 + SCREENHEIGHT/18 - SCREENHEIGHT/9/16
+    locY = SCREENHEIGHT     - y*SCREENHEIGHT/9 - SCREENHEIGHT/18 - SCREENHEIGHT/9/16
     img = 0
     w=16
     h=16
@@ -287,13 +288,13 @@ class Room(): #Room class
       px.blt(x=locX, y=locY, img=img, u=16, v=0, w=w, h=h, colkey=px.COLOR_BLACK, scale=scale)
     elif self.tiles[x][y] == 'Corner Inner':
       if x == y == 0:
-        px.blt(x=locX, y=locY, img=img, u=0, v=16, w=-w, h=h, colkey=px.COLOR_BLACK, scale=scale)
-      elif x == 0 and y == 8:
         px.blt(x=locX, y=locY, img=img, u=0, v=16, w=-w, h=-h, colkey=px.COLOR_BLACK, scale=scale)
+      elif x == 0 and y == 8:
+        px.blt(x=locX, y=locY, img=img, u=0, v=16, w=-w, h=h, colkey=px.COLOR_BLACK, scale=scale)
       elif x == 8 and y == 0:
-        px.blt(x=locX, y=locY, img=img, u=0, v=16, w=w, h=h, colkey=px.COLOR_BLACK, scale=scale)
-      elif x == y == 8:
         px.blt(x=locX, y=locY, img=img, u=0, v=16, w=w, h=-h, colkey=px.COLOR_BLACK, scale=scale)
+      elif x == y == 8:
+        px.blt(x=locX, y=locY, img=img, u=0, v=16, w=w, h=h, colkey=px.COLOR_BLACK, scale=scale)
     elif self.tiles[x][y] == 'Wall Top':
       px.blt(x=locX, y=locY, img=img, u=48, v=0, w=w, h=h, colkey=px.COLOR_BLACK, scale=scale)
     elif self.tiles[x][y] == 'Wall Bottom':
@@ -306,7 +307,7 @@ class Room(): #Room class
   def update(self):
     pass
 
-  def draw(self):
+  def draw(self, SCREENHEIGHT, SCREENWIDTH):
     for x in range(9):
       for y in range(9):
-        self.drawTile(x, y, 1440, 2560)
+        self.drawTile(x, y, SCREENHEIGHT, SCREENWIDTH)
