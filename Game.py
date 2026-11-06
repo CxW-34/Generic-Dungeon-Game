@@ -126,7 +126,7 @@ class Game(): #Main Game class. Initialising a Game object runs the game
       bottomMost = min(bottomMost, loc[1])
 
     scale = self.SCREENHEIGHT*7/9/(max((rightMost-leftMost), (upMost-bottomMost)) + 1)
-    centre = [0, 0]
+    centre = [0.0, 0.0]
     
     centre[0] = self.SCREENHEIGHT*7/9*(  (-leftMost + 0.5)/(rightMost - leftMost + 1)  )
     centre[1] = self.SCREENHEIGHT*7/9*(  (-bottomMost + 0.5)/(upMost - bottomMost + 1)  )
@@ -175,7 +175,7 @@ class Room(): #Room class
     self.buildRoom()
 
   def choiceConnection(self, totalRooms, roomsAdded, direction=''): #Chooses what type of connection to put
-    rng.seed(hash(self.hash + direction + 'Change'))
+    rng.seed = hash(self.hash + direction + 'Change')
     if totalRooms > roomsAdded:
       probability = 1-e**((-1)*(totalRooms - roomsAdded)*2/totalRooms)
       if rng.binomialvariate(p=probability):
@@ -221,17 +221,17 @@ class Room(): #Room class
 
       #50% chance for each of the rooms to have a link
       rng.seed(hash(str(self.hash) + 'South'))
-      if rng.binomialvariate(p=0.9):
+      if rng.binomialvariate(p=0.95):
         self.South = 'Arch'
       else:
         self.South = 'None'
       rng.seed(hash(str(self.hash) + 'West'))
-      if rng.binomialvariate(p=0.9):
+      if rng.binomialvariate(p=0.95):
         self.West = 'Arch'
       else:
         self.West = 'None'
       rng.seed(hash(str(self.hash) + 'East'))
-      if rng.binomialvariate(p=0.9):
+      if rng.binomialvariate(p=0.95):
         self.East = 'Arch'
       else:
         self.East = 'None'
@@ -242,8 +242,7 @@ class Room(): #Room class
       self.East = 'None'
       self.West = 'None'
 
-  def buildRoom(self): #Builds the room
-    self.tiles = [['Tile' for i in range(9)] for j in range(9)]
+  def roomSides(self): #Fixes the sides of the room
     for i in range(1, 8): #Make walls
       self.tiles[0][i] = 'Wall Left'
       self.tiles[8][i] = 'Wall Right'
@@ -299,6 +298,26 @@ class Room(): #Room class
         self.tiles[8][0] = 'Wall Bottom'
     elif self.East != 'None':
       self.tiles[8][4] = self.East
+
+  def holes(self):
+    rng.seed = hash(self.hash + 'Hole')
+    holesToAdd = rng.binomialvariate(n=49, p=0.25)
+    while holesToAdd:
+      rng.seed = hash(rng.seed)
+      x = rng.randrange(1, 8)
+      rng.seed = hash(rng.seed)
+      y = rng.randrange(1, 8)
+      if self.tiles[x][y] == 'Tile':
+        self.tiles[x][y] = 'Hole'
+        holesToAdd -= 1
+
+
+
+  def buildRoom(self): #Builds the room
+    self.tiles = [['Tile' for i in range(9)] for j in range(9)]
+    self.roomSides()
+    self.holes()
+
 
   def drawTile(self, x, y, SCREENHEIGHT, SCREENWIDTH):
     locX = SCREENHEIGHT*7/9 + x*SCREENHEIGHT/9 + SCREENHEIGHT/18 - SCREENHEIGHT/9/8 + 2
