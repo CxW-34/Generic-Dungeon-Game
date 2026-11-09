@@ -13,7 +13,7 @@ from Player import Player
 
 #Classes
 class Game(): #Main Game class. Initialising a Game object runs the game
-  def __init__(self) -> Player:
+  def __init__(self):
     # constants
     self.SCREENHEIGHT = 360*2
     self.SCREENWIDTH = int(self.SCREENHEIGHT/9*16)
@@ -164,10 +164,21 @@ class Game(): #Main Game class. Initialising a Game object runs the game
         self.currentRoom[axis] -= 1
         self.player.location[axis] += 144
 
+  def getShift(self) -> list[float]: #Gets the room shift
+    shift = [0.0, 0.0]
+    for axis in range(2):
+      if self.player.location[axis] > 16*8 - 8:
+        shift[axis] += (self.player.location[axis] - 16*8 + 8)*self.SCREENHEIGHT/48
+      elif self.player.location[axis] < 24:
+        shift[axis] += (self.player.location[axis] - 24)*self.SCREENHEIGHT/48
+    return shift
+
   def draw(self) -> None:
     px.cls(px.COLOR_BLACK)
 
-    self.drawMap()
-    self.map[str(self.currentRoom)].draw(self.SCREENHEIGHT)
+    shift = self.getShift()
 
+    self.map[str(self.currentRoom)].draw(self.SCREENHEIGHT, shift)
     self.player.draw(self.SCREENHEIGHT)
+
+    self.drawMap()

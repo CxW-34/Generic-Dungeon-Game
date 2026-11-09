@@ -7,8 +7,8 @@
 import pyxel as px
 
 class Player:
-  def __init__(self) -> Player:
-    self.location = [72, 72]
+  def __init__(self):
+    self.location = [72.0, 72.0]
     self.face = 'South'
     self.health = 8
 

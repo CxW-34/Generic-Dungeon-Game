@@ -11,7 +11,7 @@ import pyxel as px
 from sharedFunctions import hash
 
 class Room(): #Room class
-  def __init__(self, location, totalRooms, map, toAdd, roomType='Normal') -> Room:
+  def __init__(self, location, totalRooms, map, toAdd, roomType='Normal'):
     self.location = location
     self.hash = hash(str(location) + str(datetime.now())[:10])
     
@@ -144,11 +144,12 @@ class Room(): #Room class
   def extras(self, tileType) -> None: #Adds holes
     if self.roomType in ['Node', 'Boss']:
       return
+    p = 0.0
     match tileType:
       case 'Hole':
-        p=0.2
+        p = 0.2
       case 'Pillar':
-        p=0.06
+        p = 0.06
     rng.seed = hash(self.hash + tileType)
     holesToAdd = rng.binomialvariate(n=49, p=p)
     while holesToAdd:
@@ -166,9 +167,9 @@ class Room(): #Room class
     self.extras('Hole')
     self.extras('Pillar')
 
-  def drawTile(self, x, y, SCREENHEIGHT, layer) -> None: #Draws a tile
-    locX = SCREENHEIGHT*7/9 + x*SCREENHEIGHT/9 + SCREENHEIGHT/18 - SCREENHEIGHT/9/8 + 2
-    locY = SCREENHEIGHT     - y*SCREENHEIGHT/9 - SCREENHEIGHT/18 - SCREENHEIGHT/9/8 + 2
+  def drawTile(self, x, y, SCREENHEIGHT, layer, shift) -> None: #Draws a tile
+    locX = SCREENHEIGHT*7/9 + x*SCREENHEIGHT/9 + SCREENHEIGHT/18 - SCREENHEIGHT/9/8 + 2 - shift[0]
+    locY = SCREENHEIGHT     - y*SCREENHEIGHT/9 - SCREENHEIGHT/18 - SCREENHEIGHT/9/8 + 2 + shift[1]
     img = 0
     w = 16
     h = 16
@@ -237,8 +238,8 @@ class Room(): #Room class
   def update(self) -> None:
     pass
 
-  def draw(self, SCREENHEIGHT) -> None:
+  def draw(self, SCREENHEIGHT, shift) -> None:
     for layer in range(1, 4):
       for x in range(9):
         for y in range(9):
-          self.drawTile(x, y, SCREENHEIGHT, layer)
+          self.drawTile(x, y, SCREENHEIGHT, layer, shift)
