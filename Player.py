@@ -22,7 +22,7 @@ class Player:
     if px.btn(px.KEY_SPACE):
       return
 
-    speed = 1.2
+    speed = 0.3125
 
     if px.btn(px.KEY_UP) and not px.btn(px.KEY_DOWN):
       self.location[1] += speed
@@ -33,12 +33,45 @@ class Player:
     elif px.btn(px.KEY_LEFT) and not px.btn(px.KEY_RIGHT):
       self.location[0] -= speed
 
-  def update(self) -> None:
+  def nearestTiles(self, pos) -> list[list[float]]: #Finds the nearest tiles
+    posInTile = [pos[0] - pos[0]%1 >= 0.5, pos[1] - pos[1]%1]
+    
+    for axis in range(2):
+      if posInTile[axis]:
+        posInTile[axis] = 1
+      else:
+        posInTile[axis] = -1
+    
+    tile = [pos[0]//1, pos[1]//1]
+    return [
+      [tile[0] + posInTile[0], tile[1] + posInTile[1]],
+      [tile[0] + posInTile[0], tile[1]],
+      [tile[0], tile[1] + posInTile[1]],
+      tile
+      ]
+
+  def closestPoints(self, tile, pos):
+    points = [[tile[0], tile[1]]]
+
+  def collision(self, room) -> None: #Moves the player back to avoid walking into solid objects
+    solidTiles = ['Wall Top', 'Wall Bottom', 'Wall Left', 'Wall Right', 'Corner Inner', 'Corner Outer', 'Pillar', 'Boss Door', 'Self Locking Door']
+    pos = [self.location[0]/16, self.location[1]/16]
+
+    nearest = self.nearestTiles(pos)
+
+    for tile in nearest:
+      if tile in solidTiles:
+        # collision...
+        pass
+
+  def update(self, gameMap) -> None:
     self.move()
 
-  def draw(self, SCREENHEIGHT) -> None:
-    locX = SCREENHEIGHT*7/9 + self.location[0]*SCREENHEIGHT/9/16 - SCREENHEIGHT/9/8 + 2
-    locY = SCREENHEIGHT     - self.location[1]*SCREENHEIGHT/9/16 - SCREENHEIGHT/9/8 + 2
+    # self.collision(gameMap)
+
+  def draw(self, SCREENHEIGHT, shift) -> None:
+    locX = SCREENHEIGHT*7/9 + self.location[0]*SCREENHEIGHT/9/16 - SCREENHEIGHT/9/8 + 2 - shift[0]
+    locY = SCREENHEIGHT     - self.location[1]*SCREENHEIGHT/9/16 - SCREENHEIGHT/9/8 + 2 + shift[1]
     img = 0
     w = 16
     h = 16

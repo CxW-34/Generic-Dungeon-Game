@@ -34,7 +34,8 @@ class Game(): #Main Game class. Initialising a Game object runs the game
 
     self.player = Player()
 
-    px.init(self.SCREENWIDTH, self.SCREENHEIGHT)
+    px.init(
+      width=self.SCREENWIDTH, height=self.SCREENHEIGHT, title='Generic Dungeon Game', fps=120)
     px.load('Assets.pyxres')
     px.run(self.update, self.draw)
 
@@ -154,7 +155,7 @@ class Game(): #Main Game class. Initialising a Game object runs the game
     self.devTools()
     self.map[str(self.currentRoom)].update()
 
-    self.player.update()
+    self.player.update(self.map[str(self.currentRoom)])
 
     for axis in range(2):
       if self.player.location[axis] > 144:
@@ -179,6 +180,16 @@ class Game(): #Main Game class. Initialising a Game object runs the game
     shift = self.getShift()
 
     self.map[str(self.currentRoom)].draw(self.SCREENHEIGHT, shift)
-    self.player.draw(self.SCREENHEIGHT)
+    if shift != [0.0, 0.0]:
+      if shift[0] > 0:
+        self.map[str([self.currentRoom[0] + 1, self.currentRoom[1]])].draw(self.SCREENHEIGHT, [shift[0] - self.SCREENHEIGHT, shift[1]])
+      elif shift[0] < 0:
+        self.map[str([self.currentRoom[0] - 1, self.currentRoom[1]])].draw(self.SCREENHEIGHT, [shift[0] + self.SCREENHEIGHT, shift[1]])
+      
+      if shift[1] > 0:
+        self.map[str([self.currentRoom[0], self.currentRoom[1] + 1])].draw(self.SCREENHEIGHT, [shift[0], shift[1] - self.SCREENHEIGHT])
+      elif shift[1] < 0:
+        self.map[str([self.currentRoom[0], self.currentRoom[1] - 1])].draw(self.SCREENHEIGHT, [shift[0], shift[1] + self.SCREENHEIGHT])
+    self.player.draw(self.SCREENHEIGHT, shift)
 
     self.drawMap()
