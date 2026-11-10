@@ -22,7 +22,7 @@ class Player:
     if px.btn(px.KEY_SPACE):
       return
 
-    speed = 0.3125
+    speed = 0.25
 
     if px.btn(px.KEY_UP) and not px.btn(px.KEY_DOWN):
       self.location[1] += speed

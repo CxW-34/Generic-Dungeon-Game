@@ -35,7 +35,7 @@ class Game(): #Main Game class. Initialising a Game object runs the game
     self.player = Player()
 
     px.init(
-      width=self.SCREENWIDTH, height=self.SCREENHEIGHT, title='Generic Dungeon Game', fps=120)
+      width=self.SCREENWIDTH, height=self.SCREENHEIGHT, title='Generic Dungeon Game', fps=144)
     px.load('Assets.pyxres')
     px.run(self.update, self.draw)
 
@@ -179,17 +179,25 @@ class Game(): #Main Game class. Initialising a Game object runs the game
 
     shift = self.getShift()
 
-    self.map[str(self.currentRoom)].draw(self.SCREENHEIGHT, shift)
     if shift != [0.0, 0.0]:
-      if shift[0] > 0:
-        self.map[str([self.currentRoom[0] + 1, self.currentRoom[1]])].draw(self.SCREENHEIGHT, [shift[0] - self.SCREENHEIGHT, shift[1]])
-      elif shift[0] < 0:
-        self.map[str([self.currentRoom[0] - 1, self.currentRoom[1]])].draw(self.SCREENHEIGHT, [shift[0] + self.SCREENHEIGHT, shift[1]])
-      
-      if shift[1] > 0:
-        self.map[str([self.currentRoom[0], self.currentRoom[1] + 1])].draw(self.SCREENHEIGHT, [shift[0], shift[1] - self.SCREENHEIGHT])
-      elif shift[1] < 0:
-        self.map[str([self.currentRoom[0], self.currentRoom[1] - 1])].draw(self.SCREENHEIGHT, [shift[0], shift[1] + self.SCREENHEIGHT])
+      try:
+        if shift[0] > 0:
+          self.map[str([self.currentRoom[0] + 1, self.currentRoom[1]])].draw(self.SCREENHEIGHT, [shift[0] - self.SCREENHEIGHT, shift[1]])
+        elif shift[0] < 0:
+          self.map[str([self.currentRoom[0] - 1, self.currentRoom[1]])].draw(self.SCREENHEIGHT, [shift[0] + self.SCREENHEIGHT, shift[1]])
+      except: #If there is no room there it will break and reset shift
+        shift[0] = 0.0
+
+      try:
+        if shift[1] > 0:
+          self.map[str([self.currentRoom[0], self.currentRoom[1] + 1])].draw(self.SCREENHEIGHT, [shift[0], shift[1] - self.SCREENHEIGHT])
+        elif shift[1] < 0:
+          self.map[str([self.currentRoom[0], self.currentRoom[1] - 1])].draw(self.SCREENHEIGHT, [shift[0], shift[1] + self.SCREENHEIGHT])
+      except: #Read the other one
+        shift[1] = 0.0
+
+    #Main map room placed afterwards so if shift defaults to 0 the map is not shifted
+    self.map[str(self.currentRoom)].draw(self.SCREENHEIGHT, shift)
     self.player.draw(self.SCREENHEIGHT, shift)
 
     self.drawMap()
