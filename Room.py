@@ -1,7 +1,7 @@
 # Generic Dungeon Game - Room Class
 # Created - 31/10/2026
 # Owner - Xia34_
-# Last updated - 08/11/2026
+# Last updated - 10/11/2026
 
 # Imports
 import random as rng
@@ -168,58 +168,62 @@ class Room(): #Room class
     self.extras('Pillar')
 
   def drawTile(self, x, y, SCREENHEIGHT, layer, shift) -> None: #Draws a tile
+    #      Initial shift     |Location shift    |Shift by a little over tile/2 to fix pos|Shift for room slide
     locX = SCREENHEIGHT*7/9 + x*SCREENHEIGHT/9 + SCREENHEIGHT/18 - SCREENHEIGHT/9/8 + 2 - shift[0]
     locY = SCREENHEIGHT     - y*SCREENHEIGHT/9 - SCREENHEIGHT/18 - SCREENHEIGHT/9/8 + 2 + shift[1]
-    img = 0
-    w = 16
-    h = 16
-    scale = SCREENHEIGHT/9/16
+    img = 0 #All images are on 0
+    w = 16 #16x16 tiles
+    h = 16 #16x16 tiles
+    scale = SCREENHEIGHT/9/16 #Width of a pixel
+
+    # Funny debug white dot - top left corner of tile
+    # px.rect(SCREENHEIGHT*7/9 + x*SCREENHEIGHT/9 - shift[0], SCREENHEIGHT - y*SCREENHEIGHT/9 + shift[1], 1, 1, px.COLOR_WHITE)
 
     match layer:
-      case 1:
+      case 1: #Room
         match self.tiles[x][y]:
           case 'Tile':
-            px.blt(locX, locY, img, 16, 0, w, h, px.COLOR_BLACK, scale=scale)
+            px.blt(locX, locY, img, 16, 0, w, h, scale=scale)
           case 'Hole':
-            px.blt(locX, locY, img, 0, 0, w, h, px.COLOR_BLACK, scale=scale)
+            px.blt(locX, locY, img, 0, 0, w, h, scale=scale)
           case 'Pillar':
-            px.blt(locX, locY, img, 32, 16, w, h, px.COLOR_BLACK, scale=scale)
+            px.blt(locX, locY, img, 32, 16, w, h, scale=scale)
           
           case 'Corner Inner':
             if x == y == 0:
-              px.blt(locX, locY, img, 0, 16, -w, -h, px.COLOR_BLACK, scale=scale)
+              px.blt(locX, locY, img, 0, 16, -w, -h, scale=scale)
             elif x == 0 and y == 8:
-              px.blt(locX, locY, img, 0, 16, -w, h, px.COLOR_BLACK, scale=scale)
+              px.blt(locX, locY, img, 0, 16, -w, h, scale=scale)
             elif x == 8 and y == 0:
-              px.blt(locX, locY, img, 0, 16, w, -h, px.COLOR_BLACK, scale=scale)
+              px.blt(locX, locY, img, 0, 16, w, -h, scale=scale)
             elif x == y == 8:
-              px.blt(locX, locY, img, 0, 16, w, h, px.COLOR_BLACK, scale=scale)
+              px.blt(locX, locY, img, 0, 16, w, h, scale=scale)
           
           case 'Corner Outer':
             if x == 0 and y == 0:
-              px.blt(locX, locY, img, 16, 16, -w, -h, px.COLOR_WHITE, scale=scale)
+              px.blt(locX, locY, img, 16, 16, -w, -h, scale=scale)
             elif x == 8 and y == 0:
-              px.blt(locX, locY, img, 16, 16, w, h, px.COLOR_WHITE, scale=scale, rotate=90)
+              px.blt(locX, locY, img, 16, 16, w, h, scale=scale, rotate=90)
             elif x == 0 and y == 8:
-              px.blt(locX, locY, img, 16, 16, w, h, px.COLOR_WHITE, scale=scale, rotate=270)
+              px.blt(locX, locY, img, 16, 16, w, h, scale=scale, rotate=270)
             else:
-              px.blt(locX, locY, img, 16, 16, w, h, px.COLOR_WHITE, scale=scale)
+              px.blt(locX, locY, img, 16, 16, w, h, scale=scale)
           
           case 'Wall Top':
-            px.blt(locX, locY, img, 48, 0, w, h, px.COLOR_BLACK, scale=scale)
+            px.blt(locX, locY, img, 48, 0, w, h, scale=scale)
           case 'Wall Bottom':
-            px.blt(locX, locY, img, 48, 0, w, -h, px.COLOR_BLACK, scale=scale)
+            px.blt(locX, locY, img, 48, 0, w, -h, scale=scale)
           case 'Wall Left':
-            px.blt(locX, locY, img, 48, 0, w, h, px.COLOR_BLACK, scale=scale, rotate=270)
+            px.blt(locX, locY, img, 48, 0, w, h, scale=scale, rotate=270)
           case 'Wall Right':
-            px.blt(locX, locY, img, 48, 0, w, h, px.COLOR_BLACK, scale=scale, rotate=90)
+            px.blt(locX, locY, img, 48, 0, w, h, scale=scale, rotate=90)
 
-      case 2:
+      case 2: #Pillar
         match self.tiles[x][y]:
           case 'Pillar':
-            px.blt(locX, locY - SCREENHEIGHT/9, img, 48, 16, w, h, px.COLOR_BLACK, scale=scale)
+            px.blt(locX, locY - SCREENHEIGHT/9, img, 48, 16, w, h, px.COLOR_BLACK, scale=scale) #For top bit of the pillar
 
-      case 3:
+      case 3: #Doors
         match self.tiles[x][y]:
           case 'Arch' | 'Boss Door' | 'Self Locking Door':
             if self.tiles[x][y] == 'Arch':
@@ -227,13 +231,13 @@ class Room(): #Room class
             else:
               u, v = 16, 32
             if y == 8:
-              px.blt(locX, locY, img, u, v, w, h, px.COLOR_WHITE, scale=scale)
+              px.blt(locX, locY, img, u, v, w, h, scale=scale)
             elif y == 0:
-              px.blt(locX, locY, img, u, v, w, h, px.COLOR_WHITE, scale=scale, rotate=180)
+              px.blt(locX, locY, img, u, v, w, h, scale=scale, rotate=180)
             elif x == 0:
-              px.blt(locX, locY, img, u, v, w, h, px.COLOR_WHITE, scale=scale, rotate=270)
+              px.blt(locX, locY, img, u, v, w, h, scale=scale, rotate=270)
             elif x == 8:
-              px.blt(locX, locY, img, u, v, w, h, px.COLOR_WHITE, scale=scale, rotate=90)
+              px.blt(locX, locY, img, u, v, w, h, scale=scale, rotate=90)
 
   def update(self) -> None:
     pass

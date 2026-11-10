@@ -1,7 +1,7 @@
 # Generic Dungeon Game - Game Class
 # Created - 31/10/2026
 # Owner - Xia34_
-# Last updated - 08/11/2026
+# Last updated - 10/11/2026
 
 # Imports
 from datetime import datetime
@@ -34,8 +34,7 @@ class Game(): #Main Game class. Initialising a Game object runs the game
 
     self.player = Player()
 
-    px.init(
-      width=self.SCREENWIDTH, height=self.SCREENHEIGHT, title='Generic Dungeon Game', fps=144)
+    px.init(width=self.SCREENWIDTH, height=self.SCREENHEIGHT, title='Generic Dungeon Game', fps=144)
     px.load('Assets.pyxres')
     px.run(self.update, self.draw)
 
@@ -201,3 +200,4 @@ class Game(): #Main Game class. Initialising a Game object runs the game
     self.player.draw(self.SCREENHEIGHT, shift)
 
     self.drawMap()
+    px.rect(0, 0, self.SCREENWIDTH*7/16, self.SCREENHEIGHT*2/9, px.COLOR_BLACK)
