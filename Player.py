@@ -1,7 +1,7 @@
 # Generic Dungeon Game - Player Class
 # Created - 31/10/2026
 # Owner - Xia34_
-# Last updated - 10/11/2026
+# Last updated - 12/11/2026
 
 # Imports
 import pyxel as px
@@ -79,25 +79,46 @@ class Player:
 
     return closest
 
-  def doCollision(self, room) -> None: #Moves the player back to avoid walking into solid objects
+  # def doCollision(self, room) -> None: #Moves the player back to avoid walking into solid objects
+  #   solidTiles = ['Wall Top', 'Wall Bottom', 'Wall Left', 'Wall Right', 'Corner Inner', 'Corner Outer', 'Pillar', 'Boss Door', 'Self Locking Door']
+  #   pos = [self.location[0]/16, self.location[1]/16]
+
+  #   nearest = self.nearestTiles(pos)
+  #   for tile in nearest:
+  #     if tile[0] in range(1, 9) and tile[1] in range(1, 9):
+  #       if room.tiles[tile[0]][tile[1]] in solidTiles:
+
+  #         closest = self.closestPoints(tile, pos)
+  #         if len(closest) == 1: #If in range, move player by unit vector * (player rad - |vector|) according to pseudocode
+  #           closest = closest[0]
+  #           if self.dist(pos, closest) < self.radius:
+  #             vector = [closest[i] - pos[i] for i in range(2)]
+  #             vector = [vector[i]/self.dist(vector) for i in range(2)]
+  #             magnitude = self.radius - self.dist(pos, closest)
+
+  #             self.location = [self.location[i] - vector[i]*magnitude for i in range(2)]
+  #             px.rect(720*7/9 + closest[0]*720/9, 720 - closest[1]*720/9, 1, 1, px.COLOR_WHITE)
+
+  def doCollision(self, room) -> None:
     solidTiles = ['Wall Top', 'Wall Bottom', 'Wall Left', 'Wall Right', 'Corner Inner', 'Corner Outer', 'Pillar', 'Boss Door', 'Self Locking Door']
     pos = [self.location[0]/16, self.location[1]/16]
 
     nearest = self.nearestTiles(pos)
+
     for tile in nearest:
       if tile[0] in range(1, 9) and tile[1] in range(1, 9):
-        if room.tiles[tile[0]][tile[1]] in solidTiles:
+        if room.tiles[tile[0]][tile[1]] in solidTiles: #Start box collision here
 
-          closest = self.closestPoints(tile, pos)
-          if len(closest) == 1: #If in range, move player by unit vector * (player rad - |vector|) according to pseudocode
-            closest = closest[0]
-            if self.dist(pos, closest) < self.radius:
-              vector = [closest[i] - pos[i] for i in range(2)]
-              vector = [vector[i]/self.dist(vector) for i in range(2)]
-              magnitude = self.radius - self.dist(pos, closest)
+          for axis in range(2):
+            axis2 = 0 if axis else 1
+              
+            if tile[axis] - 0.5 < pos[axis] < tile[axis] + 0.5:
+              if tile[axis2] < pos[axis2] < tile[axis2] + self.radius + 0.5:
+                pos[axis2] = tile[axis2] + self.radius + 0.5
+              elif tile[axis2] - 0.5 - self.radius < pos[axis2] < tile[axis2]:
+                pos[axis2] = tile[axis2] - self.radius - 0.5
 
-              self.location = [self.location[i] - vector[i]*magnitude for i in range(2)]
-              px.rect(720*7/9 + closest[0]*720/9, 720 - closest[1]*720/9, 1, 1, px.COLOR_WHITE)
+    self.location = [pos[0]*16, pos[1]*16]
 
   def update(self, gameMap) -> None:
     self.move()
