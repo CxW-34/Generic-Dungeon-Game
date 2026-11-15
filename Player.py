@@ -1,7 +1,7 @@
 # Generic Dungeon Game - Player Class
 # Created - 31/10/2026
 # Owner - Xia34_
-# Last updated - 13/11/2026
+# Last updated - 14/11/2026
 
 # Imports
 import pyxel as px
@@ -12,7 +12,11 @@ class Player:
     self.face = 'South'
     self.health = 8
     self.radius = 0.5
-    self.dashTimer = 0
+    
+    self.isDash = False
+    self.dashTimer = 32
+    self.maxDash = 32
+    self.dashDirection = [0.0, 0.0]
 
   def takeDamage(self, damage) -> None: #Fpr taking damage (to be used by enemy class)
     self.health = max(0, self.health - damage)
@@ -24,18 +28,53 @@ class Player:
     if px.btn(px.KEY_SPACE):
       return
 
-    if px.btn(px.KEY_C):
-      pass
-    speed = 0.25
 
-    if px.btn(px.KEY_UP) and not px.btn(px.KEY_DOWN):
-      self.location[1] += speed
-    elif px.btn(px.KEY_DOWN) and not px.btn(px.KEY_UP):
-      self.location[1] -= speed
-    if px.btn(px.KEY_RIGHT) and not px.btn(px.KEY_LEFT):
-      self.location[0] += speed
-    elif px.btn(px.KEY_LEFT) and not px.btn(px.KEY_RIGHT):
-      self.location[0] -= speed
+    if px.btnp(px.KEY_C):
+      if self.isDash:
+        self.isDash = False
+      else:
+        if self.dashTimer == self.maxDash:
+          self.isDash = True
+      
+          self.dashDirection = [0.0, 0.0]
+          if px.btn(px.KEY_UP):
+            self.dashDirection[1] += 1
+          if px.btn(px.KEY_DOWN):
+            self.dashDirection[1] -= 1
+          if px.btn(px.KEY_LEFT):
+            self.dashDirection[0] -= 1
+          if px.btn(px.KEY_RIGHT):
+            self.dashDirection[0] += 1
+
+          if self.dashDirection[0] and self.dashDirection[1]:
+            for axis in range(2):
+              self.dashDirection[axis] = self.dashDirection[axis]/(2**0.5)
+
+          if (not self.dashDirection[0]) and (not self.dashDirection[1]):
+            self.isDash = False
+
+
+    if self.isDash:
+      for axis in range(2):
+        self.location[axis] += self.dashDirection[axis]
+      return
+    else:
+      velocity = [0.0, 0.0]
+      if px.btn(px.KEY_UP) and not px.btn(px.KEY_DOWN):
+        velocity[1] += 0.25
+      elif px.btn(px.KEY_DOWN) and not px.btn(px.KEY_UP):
+        velocity[1] -= 0.25
+      if px.btn(px.KEY_RIGHT) and not px.btn(px.KEY_LEFT):
+        velocity[0] += 0.25
+      elif px.btn(px.KEY_LEFT) and not px.btn(px.KEY_RIGHT):
+        velocity[0] -= 0.25
+
+      if velocity[0] and velocity[1]:
+        for axis in range(2):
+          velocity[axis] = velocity[axis]/(2**0.5)
+
+      for axis in range(2):
+        self.location[axis] += velocity[axis]
 
   def nearestTiles(self, pos) -> list[list[int]]: #Finds the nearest tiles
     tile = [int(pos[0]), int(pos[1])]
@@ -68,7 +107,7 @@ class Player:
 
     for tile in nearest:
       if tile[0] in range(9) and tile[1] in range(9):
-        if room.tiles[tile[0]][tile[1]] in solidTiles or (room.tiles[tile[0]][tile[1]] == 'Hole' and self.dashTimer == 0): #Start box collision here
+        if room.tiles[tile[0]][tile[1]] in solidTiles or (room.tiles[tile[0]][tile[1]] == 'Hole' and not self.isDash): #Start box collision here
           tile = [tile[i] + 0.5 for i in range(2)]
 
           for axis in range(2):
@@ -102,10 +141,17 @@ class Player:
     self.doInputs()
 
     self.doCollision(gameMap)
-    if self.dashTimer:
-      self.dashTimer -= 1
+    if self.isDash:
+      self.dashTimer  -= 1
+    else:
+      self.dashTimer = min(self.dashTimer + 1, self.maxDash)
+    if self.dashTimer <= 0:
+      self.isDash = False
 
-  def draw(self, SCREENHEIGHT, shift) -> None:
+  def draw(self, SCREENHEIGHT, shift, layer) -> None:
+    if layer != 2:
+      return
+    
     locX = SCREENHEIGHT*7/9 + self.location[0]*SCREENHEIGHT/9/16 - SCREENHEIGHT/9/8 + 2 - shift[0]
     locY = SCREENHEIGHT     - self.location[1]*SCREENHEIGHT/9/16 - SCREENHEIGHT/9/8 + 2 + shift[1]
     img = 0

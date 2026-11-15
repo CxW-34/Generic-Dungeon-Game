@@ -1,7 +1,7 @@
 # Generic Dungeon Game - Room Class
 # Created - 31/10/2026
 # Owner - Xia34_
-# Last updated - 10/11/2026
+# Last updated - 14/11/2026
 
 # Imports
 import random as rng
@@ -218,12 +218,12 @@ class Room(): #Room class
           case 'Wall Right':
             px.blt(locX, locY, img, 48, 0, w, h, scale=scale, rotate=90)
 
-      case 2: #Pillar
+      case 3: #Pillar
         match self.tiles[x][y]:
           case 'Pillar':
             px.blt(locX, locY - SCREENHEIGHT/9, img, 48, 16, w, h, px.COLOR_BLACK, scale=scale) #For top bit of the pillar
 
-      case 3: #Doors
+      case 4: #Doors
         match self.tiles[x][y]:
           case 'Arch' | 'Boss Door' | 'Self Locking Door':
             if self.tiles[x][y] == 'Arch':
@@ -231,19 +231,18 @@ class Room(): #Room class
             else:
               u, v = 16, 32
             if y == 8:
-              px.blt(locX, locY, img, u, v, w, h, scale=scale)
+              px.blt(locX, locY, img, u, v, w, h, px.COLOR_NAVY, scale=scale)
             elif y == 0:
-              px.blt(locX, locY, img, u, v, w, h, scale=scale, rotate=180)
+              px.blt(locX, locY, img, u, v, w, h, px.COLOR_NAVY, scale=scale, rotate=180)
             elif x == 0:
-              px.blt(locX, locY, img, u, v, w, h, scale=scale, rotate=270)
+              px.blt(locX, locY, img, u, v, w, h, px.COLOR_NAVY, scale=scale, rotate=270)
             elif x == 8:
-              px.blt(locX, locY, img, u, v, w, h, scale=scale, rotate=90)
+              px.blt(locX, locY, img, u, v, w, h, px.COLOR_NAVY, scale=scale, rotate=90)
 
   def update(self) -> None:
     pass
 
-  def draw(self, SCREENHEIGHT, shift) -> None:
-    for layer in range(1, 4):
-      for x in range(9):
-        for y in range(9):
-          self.drawTile(x, y, SCREENHEIGHT, layer, shift)
+  def draw(self, SCREENHEIGHT, shift, layer) -> None:
+    for x in range(9):
+      for y in range(9):
+        self.drawTile(x, y, SCREENHEIGHT, layer, shift)
