@@ -15,8 +15,8 @@ from Player import Player
 class Game(): #Main Game class. Initialising a Game object runs the game
   def __init__(self):
     # constants
-    self.SCREENHEIGHT = 360*2
-    self.SCREENWIDTH = int(self.SCREENHEIGHT/9*16)
+    self.HEIGHT = 360*2
+    self.WIDTH = int(self.HEIGHT/9*16)
     self.TIMECONSTANT = 2.75
 
     self.expectedLength = 15 # int(input('How long will the game be? (minutes): '))
@@ -28,13 +28,13 @@ class Game(): #Main Game class. Initialising a Game object runs the game
     self.toAdd = []
     
     self.createMap()
-    self.currentRoom = [0, 0]
+    self.cRoom = [0, 0]
     for room in self.map:
       self.map[room].buildRoom()
 
     self.player = Player()
 
-    px.init(width=self.SCREENWIDTH, height=self.SCREENHEIGHT, title='Generic Dungeon Game', fps=144)
+    px.init(width=self.WIDTH, height=self.HEIGHT, title='Generic Dungeon Game', fps=144)
     px.load('Assets.pyxres')
     px.run(self.update, self.draw)
 
@@ -73,7 +73,7 @@ class Game(): #Main Game class. Initialising a Game object runs the game
     
     #Find location and choose colour
     locX = room.location[0]*scale + centre[0] - (scale*0.4)
-    locY = self.SCREENHEIGHT - (room.location[1]*scale + centre[1] + (scale*0.4))
+    locY = self.HEIGHT - (room.location[1]*scale + centre[1] + (scale*0.4))
 
     colour = px.COLOR_GRAY
 
@@ -106,11 +106,11 @@ class Game(): #Main Game class. Initialising a Game object runs the game
     elif room.West == 'Seamless':
       px.rect(locX-scale*0.125, locY, scale*0.225, scale*0.8, colour)
 
-    if room.location == self.currentRoom:
+    if room.location == self.cRoom:
       px.circ(locX + scale*0.4, locY + scale*0.4, scale*0.15, px.COLOR_LIGHT_BLUE)
 
   def drawMap(self) -> None: # We have 280:280px to work with to draw the map
-    px.rect(0,self.SCREENHEIGHT*2/9,self.SCREENHEIGHT*7/9,self.SCREENHEIGHT*7/9,px.COLOR_NAVY)
+    px.rect(0,self.HEIGHT*2/9,self.HEIGHT*7/9,self.HEIGHT*7/9,px.COLOR_NAVY)
 
     rightMost = 0
     leftMost = 0
@@ -123,11 +123,11 @@ class Game(): #Main Game class. Initialising a Game object runs the game
       upMost = max(upMost, loc[1])
       bottomMost = min(bottomMost, loc[1])
 
-    scale = self.SCREENHEIGHT*7/9/(max((rightMost-leftMost), (upMost-bottomMost)) + 1)
+    scale = self.HEIGHT*7/9/(max((rightMost-leftMost), (upMost-bottomMost)) + 1)
     centre = [0.0, 0.0]
     
-    centre[0] = self.SCREENHEIGHT*7/9*(  (-leftMost + 0.5)/(rightMost - leftMost + 1)  )
-    centre[1] = self.SCREENHEIGHT*7/9*(  (-bottomMost + 0.5)/(upMost - bottomMost + 1)  )
+    centre[0] = self.HEIGHT*7/9*(  (-leftMost + 0.5)/(rightMost - leftMost + 1)  )
+    centre[1] = self.HEIGHT*7/9*(  (-bottomMost + 0.5)/(upMost - bottomMost + 1)  )
     
     for room in self.map:
       self.drawMapRoom(scale, centre, room)
@@ -138,40 +138,48 @@ class Game(): #Main Game class. Initialising a Game object runs the game
 
     if px.btn(px.KEY_SPACE):
       if px.btnp(px.KEY_UP):
-        if str([self.currentRoom[0], self.currentRoom[1] + 1]) in self.map:
-          self.currentRoom = [self.currentRoom[0], self.currentRoom[1] + 1]
+        if str([self.cRoom[0], self.cRoom[1] + 1]) in self.map:
+          self.cRoom = [self.cRoom[0], self.cRoom[1] + 1]
       if px.btnp(px.KEY_DOWN):
-        if str([self.currentRoom[0], self.currentRoom[1] - 1]) in self.map:
-          self.currentRoom = [self.currentRoom[0], self.currentRoom[1] - 1]
+        if str([self.cRoom[0], self.cRoom[1] - 1]) in self.map:
+          self.cRoom = [self.cRoom[0], self.cRoom[1] - 1]
       if px.btnp(px.KEY_LEFT):
-        if str([self.currentRoom[0] - 1, self.currentRoom[1]]) in self.map:
-          self.currentRoom = [self.currentRoom[0] - 1, self.currentRoom[1]]
+        if str([self.cRoom[0] - 1, self.cRoom[1]]) in self.map:
+          self.cRoom = [self.cRoom[0] - 1, self.cRoom[1]]
       if px.btnp(px.KEY_RIGHT):
-        if str([self.currentRoom[0] + 1, self.currentRoom[1]]) in self.map:
-          self.currentRoom = [self.currentRoom[0] + 1, self.currentRoom[1]]
+        if str([self.cRoom[0] + 1, self.cRoom[1]]) in self.map:
+          self.cRoom = [self.cRoom[0] + 1, self.cRoom[1]]
     
   def update(self) -> None:
     self.devTools()
-    self.map[str(self.currentRoom)].update()
+    self.map[str(self.cRoom)].update()
 
-    self.player.update(self.map[str(self.currentRoom)])
+    self.player.update(self.map[str(self.cRoom)])
 
     for axis in range(2):
       if self.player.location[axis] > 144:
-        self.currentRoom[axis] += 1
+        self.cRoom[axis] += 1
         self.player.location[axis] -= 144
       elif self.player.location[axis] < 0:
-        self.currentRoom[axis] -= 1
+        self.cRoom[axis] -= 1
         self.player.location[axis] += 144
 
   def getShift(self) -> list[float]: #Gets the room shift
     shift = [0.0, 0.0]
     for axis in range(2):
       if self.player.location[axis] > 16*8 - 8:
-        shift[axis] += (self.player.location[axis] - 16*8 + 8)*self.SCREENHEIGHT/48
+        shift[axis] += (self.player.location[axis] - 16*8 + 8)*self.HEIGHT/48
       elif self.player.location[axis] < 24:
-        shift[axis] += (self.player.location[axis] - 24)*self.SCREENHEIGHT/48
+        shift[axis] += (self.player.location[axis] - 24)*self.HEIGHT/48
     return shift
+
+  def posNeg(self, num):
+    if not num:
+      return 0
+    if num > 0:
+      return 1
+    else:
+      return -1
 
   def draw(self) -> None:
     px.cls(px.COLOR_BLACK)
@@ -180,26 +188,18 @@ class Game(): #Main Game class. Initialising a Game object runs the game
     for layer in range(1, 5):
       shift = self.getShift()
 
-      if shift != [0.0, 0.0]: #Prone to silently breaking due to lack of errors thrown
-        try:
-          if shift[0] > 0:
-            self.map[str([self.currentRoom[0] + 1, self.currentRoom[1]])].draw(self.SCREENHEIGHT, [shift[0] - self.SCREENHEIGHT, shift[1]], layer)
-          elif shift[0] < 0:
-            self.map[str([self.currentRoom[0] - 1, self.currentRoom[1]])].draw(self.SCREENHEIGHT, [shift[0] + self.SCREENHEIGHT, shift[1]], layer)
-        except: #If there is no room there it will break and reset shift
-          shift[0] = 0.0
-
-        try:
-          if shift[1] > 0:
-            self.map[str([self.currentRoom[0], self.currentRoom[1] + 1])].draw(self.SCREENHEIGHT, [shift[0], shift[1] - self.SCREENHEIGHT], layer)
-          elif shift[1] < 0:
-            self.map[str([self.currentRoom[0], self.currentRoom[1] - 1])].draw(self.SCREENHEIGHT, [shift[0], shift[1] + self.SCREENHEIGHT], layer)
-        except: #Read the other one
-          shift[1] = 0.0
-
+      if shift[0]:
+        self.map[str([self.cRoom[0] + self.posNeg(shift[0]), self.cRoom[1]])].draw(self.HEIGHT, [shift[0] - self.HEIGHT*self.posNeg(shift[0]), shift[1]], layer)
+      if shift[1]:
+        self.map[str([self.cRoom[0], self.cRoom[1] + self.posNeg(shift[1])])].draw(self.HEIGHT, [shift[0], shift[1] - self.HEIGHT*self.posNeg(shift[1])], layer)
+      try: #possible there is no room in the corner
+        if shift[0] and shift[1]:
+          self.map[str([self.cRoom[0] + self.posNeg(shift[0]), self.cRoom[1] + self.posNeg(shift[1])])].draw(self.HEIGHT, [shift[0] - self.HEIGHT*self.posNeg(shift[0]), shift[1] - self.HEIGHT*self.posNeg(shift[1])], layer)
+      except:
+        pass
       
-      self.map[str(self.currentRoom)].draw(self.SCREENHEIGHT, shift, layer)
-      self.player.draw(self.SCREENHEIGHT, shift, layer)
+      self.map[str(self.cRoom)].draw(self.HEIGHT, shift, layer)
+      self.player.draw(self.HEIGHT, shift, layer)
 
     self.drawMap()
-    px.rect(0, 0, self.SCREENWIDTH*7/16, self.SCREENHEIGHT*2/9, px.COLOR_BLACK)
+    px.rect(0, 0, self.WIDTH*7/16, self.HEIGHT*2/9, px.COLOR_BLACK)

@@ -167,17 +167,17 @@ class Room(): #Room class
     self.extras('Hole')
     self.extras('Pillar')
 
-  def drawTile(self, x, y, SCREENHEIGHT, layer, shift) -> None: #Draws a tile
+  def drawTile(self, x, y, HEIGHT, layer, shift) -> None: #Draws a tile
     #      Initial shift     |Location shift    |Shift by a little over tile/2 to fix pos|Shift for room slide
-    locX = SCREENHEIGHT*7/9 + x*SCREENHEIGHT/9 + SCREENHEIGHT/18 - SCREENHEIGHT/9/8 + 2 - shift[0]
-    locY = SCREENHEIGHT     - y*SCREENHEIGHT/9 - SCREENHEIGHT/18 - SCREENHEIGHT/9/8 + 2 + shift[1]
+    locX = HEIGHT*7/9 + x*HEIGHT/9 + HEIGHT/18 - HEIGHT/9/8 + 2 - shift[0]
+    locY = HEIGHT     - y*HEIGHT/9 - HEIGHT/18 - HEIGHT/9/8 + 2 + shift[1]
     img = 0 #All images are on 0
     w = 16 #16x16 tiles
     h = 16 #16x16 tiles
-    scale = SCREENHEIGHT/9/16 #Width of a pixel
+    scale = HEIGHT/9/16 #Width of a pixel
 
     # Funny debug white dot - top left corner of tile
-    # px.rect(SCREENHEIGHT*7/9 + x*SCREENHEIGHT/9 - shift[0], SCREENHEIGHT - y*SCREENHEIGHT/9 + shift[1], 1, 1, px.COLOR_WHITE)
+    # px.rect(HEIGHT*7/9 + x*HEIGHT/9 - shift[0], HEIGHT - y*HEIGHT/9 + shift[1], 1, 1, px.COLOR_WHITE)
 
     match layer:
       case 1: #Room
@@ -221,7 +221,7 @@ class Room(): #Room class
       case 3: #Pillar
         match self.tiles[x][y]:
           case 'Pillar':
-            px.blt(locX, locY - SCREENHEIGHT/9, img, 48, 16, w, h, px.COLOR_BLACK, scale=scale) #For top bit of the pillar
+            px.blt(locX, locY - HEIGHT/9, img, 48, 16, w, h, px.COLOR_BLACK, scale=scale) #For top bit of the pillar
 
       case 4: #Doors
         match self.tiles[x][y]:
@@ -242,7 +242,7 @@ class Room(): #Room class
   def update(self) -> None:
     pass
 
-  def draw(self, SCREENHEIGHT, shift, layer) -> None:
+  def draw(self, HEIGHT, shift, layer) -> None:
     for x in range(9):
       for y in range(9):
-        self.drawTile(x, y, SCREENHEIGHT, layer, shift)
+        self.drawTile(x, y, HEIGHT, layer, shift)

@@ -148,15 +148,15 @@ class Player:
     if self.dashTimer <= 0:
       self.isDash = False
 
-  def draw(self, SCREENHEIGHT, shift, layer) -> None:
+  def draw(self, HEIGHT, shift, layer) -> None:
     if layer != 2:
       return
     
-    locX = SCREENHEIGHT*7/9 + self.location[0]*SCREENHEIGHT/9/16 - SCREENHEIGHT/9/8 + 2 - shift[0]
-    locY = SCREENHEIGHT     - self.location[1]*SCREENHEIGHT/9/16 - SCREENHEIGHT/9/8 + 2 + shift[1]
+    locX = HEIGHT*7/9 + self.location[0]*HEIGHT/9/16 - HEIGHT/9/8 + 2 - shift[0]
+    locY = HEIGHT     - self.location[1]*HEIGHT/9/16 - HEIGHT/9/8 + 2 + shift[1]
     img = 0
     w = 16
     h = 16
-    scale = SCREENHEIGHT/9/16
+    scale = HEIGHT/9/16
     
     px.blt(locX, locY, img, 0, 48, w, h, px.COLOR_BLACK, scale=scale)
