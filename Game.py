@@ -1,13 +1,13 @@
 # Generic Dungeon Game - Game Class
 # Created - 31/10/2026
 # Owner - Xia34_
-# Last updated - 14/11/2026
+# Last updated - 25/11/2026
 
 # Imports
 from datetime import datetime
 import pyxel as px
 
-from sharedFunctions import hash
+from sharedFunctions import hash, posNeg
 from Room import Room
 from Player import Player
 
@@ -173,14 +173,6 @@ class Game(): #Main Game class. Initialising a Game object runs the game
         shift[axis] += (self.player.location[axis] - 24)*self.HEIGHT/48
     return shift
 
-  def posNeg(self, num):
-    if not num:
-      return 0
-    if num > 0:
-      return 1
-    else:
-      return -1
-
   def draw(self) -> None:
     px.cls(px.COLOR_BLACK)
 
@@ -189,12 +181,12 @@ class Game(): #Main Game class. Initialising a Game object runs the game
       shift = self.getShift()
 
       if shift[0]:
-        self.map[str([self.cRoom[0] + self.posNeg(shift[0]), self.cRoom[1]])].draw(self.HEIGHT, [shift[0] - self.HEIGHT*self.posNeg(shift[0]), shift[1]], layer)
+        self.map[str([self.cRoom[0] + posNeg(shift[0]), self.cRoom[1]])].draw(self.HEIGHT, [shift[0] - self.HEIGHT*posNeg(shift[0]), shift[1]], layer)
       if shift[1]:
-        self.map[str([self.cRoom[0], self.cRoom[1] + self.posNeg(shift[1])])].draw(self.HEIGHT, [shift[0], shift[1] - self.HEIGHT*self.posNeg(shift[1])], layer)
+        self.map[str([self.cRoom[0], self.cRoom[1] + posNeg(shift[1])])].draw(self.HEIGHT, [shift[0], shift[1] - self.HEIGHT*posNeg(shift[1])], layer)
       try: #possible there is no room in the corner
         if shift[0] and shift[1]:
-          self.map[str([self.cRoom[0] + self.posNeg(shift[0]), self.cRoom[1] + self.posNeg(shift[1])])].draw(self.HEIGHT, [shift[0] - self.HEIGHT*self.posNeg(shift[0]), shift[1] - self.HEIGHT*self.posNeg(shift[1])], layer)
+          self.map[str([self.cRoom[0] + posNeg(shift[0]), self.cRoom[1] + posNeg(shift[1])])].draw(self.HEIGHT, [shift[0] - self.HEIGHT*posNeg(shift[0]), shift[1] - self.HEIGHT*posNeg(shift[1])], layer)
       except:
         pass
       

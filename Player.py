@@ -1,10 +1,11 @@
 # Generic Dungeon Game - Player Class
 # Created - 31/10/2026
 # Owner - Xia34_
-# Last updated - 14/11/2026
+# Last updated - 25/11/2026
 
 # Imports
 import pyxel as px
+from sharedFunctions import posNeg
 
 class Player:
   def __init__(self):
@@ -18,18 +19,17 @@ class Player:
     self.maxDash = 32
     self.dashDirection = [0.0, 0.0]
 
+    self.attackFrame = -1
+    self.shield = False
+
   def takeDamage(self, damage) -> None: #Fpr taking damage (to be used by enemy class)
     self.health = max(0, self.health - damage)
 
   def heal(self) -> None: #For healing the player
     self.health = min(8, self.health + 5)
 
-  def doInputs(self) -> None: #Gets player input and moves player
-    if px.btn(px.KEY_SPACE):
-      return
-
-
-    if px.btnp(px.KEY_C):
+  def doMovement(self) -> None: #Handles player movement
+    if px.btnp(px.KEY_C): #Enter/exit dash state
       if self.isDash:
         self.isDash = False
       else:
@@ -58,23 +58,55 @@ class Player:
       for axis in range(2):
         self.location[axis] += self.dashDirection[axis]
       return
-    else:
-      velocity = [0.0, 0.0]
-      if px.btn(px.KEY_UP) and not px.btn(px.KEY_DOWN):
-        velocity[1] += 0.25
-      elif px.btn(px.KEY_DOWN) and not px.btn(px.KEY_UP):
-        velocity[1] -= 0.25
-      if px.btn(px.KEY_RIGHT) and not px.btn(px.KEY_LEFT):
-        velocity[0] += 0.25
-      elif px.btn(px.KEY_LEFT) and not px.btn(px.KEY_RIGHT):
-        velocity[0] -= 0.25
 
-      if velocity[0] and velocity[1]:
-        for axis in range(2):
-          velocity[axis] = velocity[axis]/(2**0.5)
+    #If not dashing have usual controls
 
+    #Movement
+    velocity = [0.0, 0.0]
+    if px.btn(px.KEY_UP) and not px.btn(px.KEY_DOWN):
+      velocity[1] += 0.25
+    elif px.btn(px.KEY_DOWN) and not px.btn(px.KEY_UP):
+      velocity[1] -= 0.25
+    if px.btn(px.KEY_RIGHT) and not px.btn(px.KEY_LEFT):
+      velocity[0] += 0.25
+    elif px.btn(px.KEY_LEFT) and not px.btn(px.KEY_RIGHT):
+      velocity[0] -= 0.25
+
+    if velocity[0] and velocity[1]:
       for axis in range(2):
-        self.location[axis] += velocity[axis]
+        velocity[axis] = velocity[axis]/(2**0.5)
+
+    for axis in range(2):
+      self.location[axis] += velocity[axis]
+
+    if not (self.shield or self.attackFrame > -1): #When holding the shield, the player keeps facing the same direction
+      match [posNeg(velocity[axis]) for axis in range(2)]:
+        case [0, 1]:
+          self.face = 'North'
+        case [0, -1]:
+          self.face = 'South'
+        case [-1, 0]:
+          self.face = 'West'
+        case [1, 0]:
+          self.face = 'East'
+        case _:
+          pass
+
+  def doAttack(self) -> None: #Attacks if attacking
+    if px.btnp(px.KEY_X):
+      if self.attackFrame == -1:
+        self.attackFrame = 36
+
+  def doShield(self) -> None: #Shields if shielding
+    self.shield = px.btn(px.KEY_Z)
+
+  def doInputs(self) -> None: #Gets player input and moves player
+    if px.btn(px.KEY_SPACE):
+      return
+
+    self.doMovement()
+    self.doAttack()
+    self.doShield()
 
   def nearestTiles(self, pos) -> list[list[int]]: #Finds the nearest tiles
     tile = [int(pos[0]), int(pos[1])]
@@ -148,6 +180,9 @@ class Player:
     if self.dashTimer <= 0:
       self.isDash = False
 
+    if self.attackFrame > -1:
+      self.attackFrame -= 1
+
   def draw(self, HEIGHT, shift, layer) -> None:
     if layer != 2:
       return
@@ -158,5 +193,15 @@ class Player:
     w = 16
     h = 16
     scale = HEIGHT/9/16
-    
-    px.blt(locX, locY, img, 0, 48, w, h, px.COLOR_BLACK, scale=scale)
+    rotate = 0
+    match self.face:
+      case 'North':
+        rotate = 0
+      case 'South':
+        rotate = 180
+      case 'East':
+        rotate = 90
+      case 'West':
+        rotate = 270
+
+    px.blt(locX, locY, img, 0, 48, w, h, px.COLOR_BLACK, rotate=rotate, scale=scale)
