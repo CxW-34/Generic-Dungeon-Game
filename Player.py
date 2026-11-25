@@ -212,24 +212,28 @@ class Player:
         rotate = 0
         sword = [-2, 8]
         shield = [2, 4]
+        px.blt(locX, locY, img, 16, 48, w, h, px.COLOR_WHITE, rotate, scale) #Player sprite
       case 'South':
         rotate = 180
         sword = [2, -8]
         shield = [-2, -4]
+        px.blt(locX, locY, img, 32, 48, w, h, px.COLOR_WHITE, scale=scale) #Player sprite
       case 'East':
         rotate = 90
         sword = [8, 2]
         shield = [4, -2]
+        px.blt(locX, locY, img, 0, 48, w, h, px.COLOR_WHITE, scale=scale) #Player sprite
       case 'West':
         rotate = 270
         sword = [-8, -2]
         shield = [-4, 2]
+        px.blt(locX, locY, img, 0, 48, -w, h, px.COLOR_WHITE, scale=scale) #Player sprite
 
     for axis in range(2):
       sword[axis] = sword[axis]*HEIGHT/9/16
       shield[axis] = shield[axis]*HEIGHT/9/16
 
-    px.blt(locX, locY, img, 0, 48, w, h, px.COLOR_WHITE, rotate, scale) #Player sprite
+    
     
     if self.attackFrame >= 0: #Sword
       px.blt(locX + sword[0], locY - sword[1], img, 0, 64, w, h, px.COLOR_BLACK, rotate, scale)
