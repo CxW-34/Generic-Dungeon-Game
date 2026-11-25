@@ -28,40 +28,32 @@ class Player:
   def heal(self) -> None: #For healing the player
     self.health = min(8, self.health + 5)
 
-  def doMovement(self) -> None: #Handles player movement
-    if px.btnp(px.KEY_C): #Enter/exit dash state
-      if self.isDash:
-        self.isDash = False
-      else:
-        if self.dashTimer == self.maxDash:
-          self.isDash = True
-      
-          self.dashDirection = [0.0, 0.0]
-          if px.btn(px.KEY_UP):
-            self.dashDirection[1] += 1
-          if px.btn(px.KEY_DOWN):
-            self.dashDirection[1] -= 1
-          if px.btn(px.KEY_LEFT):
-            self.dashDirection[0] -= 1
-          if px.btn(px.KEY_RIGHT):
-            self.dashDirection[0] += 1
 
-          if self.dashDirection[0] and self.dashDirection[1]:
-            for axis in range(2):
-              self.dashDirection[axis] = self.dashDirection[axis]/(2**0.5)
-
-          if (not self.dashDirection[0]) and (not self.dashDirection[1]):
-            self.isDash = False
-
-
+  def doDash(self) -> None: #Handles dash
     if self.isDash:
-      for axis in range(2):
-        self.location[axis] += self.dashDirection[axis]
-      return
+      self.isDash = False
+    else:
+      if self.dashTimer == self.maxDash:
+        self.isDash = True
+    
+        self.dashDirection = [0.0, 0.0]
+        if px.btn(px.KEY_UP):
+          self.dashDirection[1] += 1
+        if px.btn(px.KEY_DOWN):
+          self.dashDirection[1] -= 1
+        if px.btn(px.KEY_LEFT):
+          self.dashDirection[0] -= 1
+        if px.btn(px.KEY_RIGHT):
+          self.dashDirection[0] += 1
 
-    #If not dashing have usual controls
+        if self.dashDirection[0] and self.dashDirection[1]:
+          for axis in range(2):
+            self.dashDirection[axis] = self.dashDirection[axis]/(2**0.5)
 
-    #Movement
+        if (not self.dashDirection[0]) and (not self.dashDirection[1]):
+          self.isDash = False
+
+  def doWalk(self) -> list[float]: #Handles walking
     velocity = [0.0, 0.0]
     if px.btn(px.KEY_UP) and not px.btn(px.KEY_DOWN):
       velocity[1] += 0.25
@@ -75,6 +67,22 @@ class Player:
     if velocity[0] and velocity[1]:
       for axis in range(2):
         velocity[axis] = velocity[axis]/(2**0.5)
+
+    return velocity
+
+  def doMovement(self) -> None: #Handles player movement
+    if px.btnp(px.KEY_C): #Enter/exit dash state
+      self.doDash()
+
+    if self.isDash:
+      for axis in range(2):
+        self.location[axis] += self.dashDirection[axis]
+      return
+
+    #If not dashing have usual controls
+
+    #Movement
+    velocity = self.doWalk()
 
     for axis in range(2):
       self.location[axis] += velocity[axis]
@@ -92,13 +100,16 @@ class Player:
         case _:
           pass
 
+
   def doAttack(self) -> None: #Attacks if attacking
-    if px.btnp(px.KEY_X):
-      if self.attackFrame == -1:
+    if px.btnp(px.KEY_X) and not self.shield:
+      if self.attackFrame == -18:
         self.attackFrame = 36
 
   def doShield(self) -> None: #Shields if shielding
     self.shield = px.btn(px.KEY_Z)
+    if self.attackFrame >= 0:
+      self.shield = False
 
   def doInputs(self) -> None: #Gets player input and moves player
     if px.btn(px.KEY_SPACE):
@@ -107,6 +118,7 @@ class Player:
     self.doMovement()
     self.doAttack()
     self.doShield()
+
 
   def nearestTiles(self, pos) -> list[list[int]]: #Finds the nearest tiles
     tile = [int(pos[0]), int(pos[1])]
@@ -128,7 +140,7 @@ class Player:
       return (  (pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2  )**0.5
     return (pos1[0]**2 + pos1[1]**2)**0.5
 
-  def doCollision(self, room) -> None:
+  def doCollision(self, room) -> None: #Moves player to avoid sitting inside
     solidTiles = [
       'Wall Top', 'Wall Bottom', 'Wall Left', 'Wall Right', 'Corner Inner', 'Corner Outer',
       'Pillar', 'Boss Door', 'Self Locking Door'
@@ -169,6 +181,7 @@ class Player:
 
     self.location = [pos[0]*16, pos[1]*16]
 
+
   def update(self, gameMap) -> None:
     self.doInputs()
 
@@ -180,7 +193,7 @@ class Player:
     if self.dashTimer <= 0:
       self.isDash = False
 
-    if self.attackFrame > -1:
+    if self.attackFrame > -18:
       self.attackFrame -= 1
 
   def draw(self, HEIGHT, shift, layer) -> None:
@@ -197,11 +210,28 @@ class Player:
     match self.face:
       case 'North':
         rotate = 0
+        sword = [-2, 8]
+        shield = [2, 4]
       case 'South':
         rotate = 180
+        sword = [2, -8]
+        shield = [-2, -4]
       case 'East':
         rotate = 90
+        sword = [8, 2]
+        shield = [4, -2]
       case 'West':
         rotate = 270
+        sword = [-8, -2]
+        shield = [-4, 2]
 
-    px.blt(locX, locY, img, 0, 48, w, h, px.COLOR_BLACK, rotate=rotate, scale=scale)
+    for axis in range(2):
+      sword[axis] = sword[axis]*HEIGHT/9/16
+      shield[axis] = shield[axis]*HEIGHT/9/16
+
+    px.blt(locX, locY, img, 0, 48, w, h, px.COLOR_WHITE, rotate, scale) #Player sprite
+    
+    if self.attackFrame >= 0: #Sword
+      px.blt(locX + sword[0], locY - sword[1], img, 0, 64, w, h, px.COLOR_BLACK, rotate, scale)
+    if self.shield: #Shield
+      px.blt(locX + shield[0], locY - shield[1], img, 16, 64, w, h, px.COLOR_BLACK, rotate, scale)

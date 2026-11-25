@@ -68,6 +68,26 @@ class Game(): #Main Game class. Initialising a Game object runs the game
       self.makeRoom(self.toAdd[0])
       self.toAdd = self.toAdd[1:]
 
+
+  def devTools(self) -> None: #To test room generation and drawings and stuff
+    if False: #False for devTools, True for normal
+      return
+
+    if px.btn(px.KEY_SPACE):
+      if px.btnp(px.KEY_UP):
+        if str([self.cRoom[0], self.cRoom[1] + 1]) in self.map:
+          self.cRoom = [self.cRoom[0], self.cRoom[1] + 1]
+      if px.btnp(px.KEY_DOWN):
+        if str([self.cRoom[0], self.cRoom[1] - 1]) in self.map:
+          self.cRoom = [self.cRoom[0], self.cRoom[1] - 1]
+      if px.btnp(px.KEY_LEFT):
+        if str([self.cRoom[0] - 1, self.cRoom[1]]) in self.map:
+          self.cRoom = [self.cRoom[0] - 1, self.cRoom[1]]
+      if px.btnp(px.KEY_RIGHT):
+        if str([self.cRoom[0] + 1, self.cRoom[1]]) in self.map:
+          self.cRoom = [self.cRoom[0] + 1, self.cRoom[1]]
+
+
   def drawMapRoom(self, scale, centre, room) -> None: #Draws a room on the map
     room = self.map[room]
     
@@ -132,24 +152,15 @@ class Game(): #Main Game class. Initialising a Game object runs the game
     for room in self.map:
       self.drawMapRoom(scale, centre, room)
 
-  def devTools(self) -> None: #To test room generation and drawings and stuff
-    if False: #False for devTools, True for normal
-      return
+  def getShift(self) -> list[float]: #Gets the room shift
+    shift = [0.0, 0.0]
+    for axis in range(2):
+      if self.player.location[axis] > 16*8 - 8:
+        shift[axis] += (self.player.location[axis] - 16*8 + 8)*self.HEIGHT/48
+      elif self.player.location[axis] < 24:
+        shift[axis] += (self.player.location[axis] - 24)*self.HEIGHT/48
+    return shift
 
-    if px.btn(px.KEY_SPACE):
-      if px.btnp(px.KEY_UP):
-        if str([self.cRoom[0], self.cRoom[1] + 1]) in self.map:
-          self.cRoom = [self.cRoom[0], self.cRoom[1] + 1]
-      if px.btnp(px.KEY_DOWN):
-        if str([self.cRoom[0], self.cRoom[1] - 1]) in self.map:
-          self.cRoom = [self.cRoom[0], self.cRoom[1] - 1]
-      if px.btnp(px.KEY_LEFT):
-        if str([self.cRoom[0] - 1, self.cRoom[1]]) in self.map:
-          self.cRoom = [self.cRoom[0] - 1, self.cRoom[1]]
-      if px.btnp(px.KEY_RIGHT):
-        if str([self.cRoom[0] + 1, self.cRoom[1]]) in self.map:
-          self.cRoom = [self.cRoom[0] + 1, self.cRoom[1]]
-    
   def update(self) -> None:
     self.devTools()
     self.map[str(self.cRoom)].update()
@@ -163,15 +174,6 @@ class Game(): #Main Game class. Initialising a Game object runs the game
       elif self.player.location[axis] < 0:
         self.cRoom[axis] -= 1
         self.player.location[axis] += 144
-
-  def getShift(self) -> list[float]: #Gets the room shift
-    shift = [0.0, 0.0]
-    for axis in range(2):
-      if self.player.location[axis] > 16*8 - 8:
-        shift[axis] += (self.player.location[axis] - 16*8 + 8)*self.HEIGHT/48
-      elif self.player.location[axis] < 24:
-        shift[axis] += (self.player.location[axis] - 24)*self.HEIGHT/48
-    return shift
 
   def draw(self) -> None:
     px.cls(px.COLOR_BLACK)

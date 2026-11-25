@@ -84,6 +84,7 @@ class Room(): #Room class
       self.East = 'None'
       self.West = 'None'
 
+
   def roomSides(self) -> None: #Fixes the sides of the room
     for i in range(1, 8): #Make walls
       self.tiles[0][i] = 'Wall Left'
@@ -166,6 +167,7 @@ class Room(): #Room class
     self.roomSides()
     self.extras('Hole')
     self.extras('Pillar')
+
 
   def drawTile(self, x, y, HEIGHT, layer, shift) -> None: #Draws a tile
     #      Initial shift     |Location shift    |Shift by a little over tile/2 to fix pos|Shift for room slide
