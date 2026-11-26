@@ -1,7 +1,7 @@
 # Generic Dungeon Game - Room Class
 # Created - 31/10/2026
 # Owner - Xia34_
-# Last updated - 14/11/2026
+# Last updated - 26/11/2026
 
 # Imports
 import random as rng
@@ -148,9 +148,9 @@ class Room(): #Room class
     p = 0.0
     match tileType:
       case 'Hole':
-        p = 0.2
+        p = 0.16
       case 'Pillar':
-        p = 0.06
+        p = 0.05
     rng.seed = hash(self.hash + tileType)
     holesToAdd = rng.binomialvariate(n=49, p=p)
     while holesToAdd:
@@ -167,13 +167,23 @@ class Room(): #Room class
     self.roomSides()
     self.extras('Hole')
     self.extras('Pillar')
+    self.tileVars = [[0 for i in range(9)] for j in range(9)]
 
 
   def drawTile(self, x, y, HEIGHT, layer, shift) -> None: #Draws a tile
     #      Initial shift     |Location shift    |Shift by a little over tile/2 to fix pos|Shift for room slide
     locX = HEIGHT*7/9 + x*HEIGHT/9 + HEIGHT/18 - HEIGHT/9/8 + 2 - shift[0]
     locY = HEIGHT     - y*HEIGHT/9 - HEIGHT/18 - HEIGHT/9/8 + 2 + shift[1]
-    img = 0 #All images are on 0
+    match self.tileVars[x][y]:
+      case 'Cold':
+        img = 0
+      case 'Warm':
+        img = 1
+      case 'Hot':
+        img = 2
+      case _:
+        img = 1
+        print('Warning: tile version not found')
     w = 16 #16x16 tiles
     h = 16 #16x16 tiles
     scale = HEIGHT/9/16 #Width of a pixel

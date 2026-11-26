@@ -17,3 +17,6 @@ def posNeg(num) -> int: #returns if a number is positive or negative
     return 1
   else:
     return -1
+
+def length(vector) -> float: #Returns a float length from a vector e.g v -> |v|
+  return (vector[0]**2 + vector[1]**2)**0.5
