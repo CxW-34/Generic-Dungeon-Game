@@ -1,7 +1,7 @@
 # Generic Dungeon Game - Player Class
 # Created - 31/10/2026
 # Owner - Xia34_
-# Last updated - 25/11/2026
+# Last updated - 26/11/2026
 
 # Imports
 import pyxel as px
@@ -10,6 +10,7 @@ from sharedFunctions import posNeg
 class Player:
   def __init__(self):
     self.location = [72.0, 72.0] #Shown as player centre
+    self.velocity = [0, 0]
     self.face = 'South'
     self.health = 8
     self.radius = 0.5
@@ -38,13 +39,13 @@ class Player:
     
         self.dashDirection = [0.0, 0.0]
         if px.btn(px.KEY_UP):
-          self.dashDirection[1] += 1
+          self.dashDirection[1] += 0.5
         if px.btn(px.KEY_DOWN):
-          self.dashDirection[1] -= 1
+          self.dashDirection[1] -= 0.5
         if px.btn(px.KEY_LEFT):
-          self.dashDirection[0] -= 1
+          self.dashDirection[0] -= 0.5
         if px.btn(px.KEY_RIGHT):
-          self.dashDirection[0] += 1
+          self.dashDirection[0] += 0.5
 
         if self.dashDirection[0] and self.dashDirection[1]:
           for axis in range(2):
@@ -54,21 +55,40 @@ class Player:
           self.isDash = False
 
   def doWalk(self) -> list[float]: #Handles walking
-    velocity = [0.0, 0.0]
+    walk = [0.0, 0.0]
     if px.btn(px.KEY_UP) and not px.btn(px.KEY_DOWN):
-      velocity[1] += 0.25
+      walk[1] += 0.1
     elif px.btn(px.KEY_DOWN) and not px.btn(px.KEY_UP):
-      velocity[1] -= 0.25
+      walk[1] -= 0.1
     if px.btn(px.KEY_RIGHT) and not px.btn(px.KEY_LEFT):
-      velocity[0] += 0.25
+      walk[0] += 0.1
     elif px.btn(px.KEY_LEFT) and not px.btn(px.KEY_RIGHT):
-      velocity[0] -= 0.25
+      walk[0] -= 0.1
 
-    if velocity[0] and velocity[1]:
+    if walk[0] and walk[1]:
       for axis in range(2):
-        velocity[axis] = velocity[axis]/(2**0.5)
+        walk[axis] = walk[axis]/(2**0.5)
 
-    return velocity
+    return walk
+
+  def doFriction(self) -> None: #Handles friction
+    for axis in range(2):
+      self.velocity[axis] = 0.7*self.velocity[axis]
+      if -0.02 < self.velocity[axis] < 0.02:
+        self.velocity[axis] = 0
+
+  def changeFacing(self, walk) -> str: #Changes which way the player is facing based on where they are walking
+    if not (self.shield or self.attackFrame > -1): #When holding the shield, the player keeps facing the same direction
+      match [posNeg(walk[axis]) for axis in range(2)]:
+        case [0, 1]:
+          return 'North'
+        case [0, -1]:
+          return 'South'
+        case [-1, 0]:
+          return 'West'
+        case [1, 0]:
+          return 'East'
+    return self.face
 
   def doMovement(self) -> None: #Handles player movement
     if px.btnp(px.KEY_C): #Enter/exit dash state
@@ -76,29 +96,21 @@ class Player:
 
     if self.isDash:
       for axis in range(2):
-        self.location[axis] += self.dashDirection[axis]
-      return
+        self.velocity[axis] += self.dashDirection[axis]
+        walk = [0, 0]
+    else: #If not dashing have usual controls
+      walk = self.doWalk()
+      for axis in range(2):
+        self.velocity[axis] += walk[axis]
 
-    #If not dashing have usual controls
 
-    #Movement
-    velocity = self.doWalk()
-
+    #Friction and movement
+    self.doFriction()
     for axis in range(2):
-      self.location[axis] += velocity[axis]
+      self.location[axis] += self.velocity[axis]
 
-    if not (self.shield or self.attackFrame > -1): #When holding the shield, the player keeps facing the same direction
-      match [posNeg(velocity[axis]) for axis in range(2)]:
-        case [0, 1]:
-          self.face = 'North'
-        case [0, -1]:
-          self.face = 'South'
-        case [-1, 0]:
-          self.face = 'West'
-        case [1, 0]:
-          self.face = 'East'
-        case _:
-          pass
+
+    self.face = self.changeFacing(walk) #Player faces direction of walking
 
 
   def doAttack(self) -> None: #Attacks if attacking
@@ -135,7 +147,7 @@ class Player:
       tile
     ]
 
-  def dist(self, pos1, pos2=None): #Returns distance between two points using pythag (or a vectors length)
+  def dist(self, pos1, pos2=None) -> float: #Returns distance between two points using pythag (or a vectors length)
     if pos2 != None:
       return (  (pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2  )**0.5
     return (pos1[0]**2 + pos1[1]**2)**0.5
@@ -189,7 +201,7 @@ class Player:
     if self.isDash:
       self.dashTimer  -= 1
     else:
-      self.dashTimer = min(self.dashTimer + 1, self.maxDash)
+      self.dashTimer = min(self.dashTimer + 0.5, self.maxDash)
     if self.dashTimer <= 0:
       self.isDash = False
 
@@ -212,25 +224,28 @@ class Player:
         rotate = 0
         sword = [-2, 8]
         shield = [2, 4]
-        px.blt(locX, locY, img, 16, 48, w, h, px.COLOR_WHITE, rotate, scale) #Player sprite
+        px.blt(locX, locY, img, 16, 48, w, h, px.COLOR_WHITE, scale=scale) #Player sprite
       case 'South':
         rotate = 180
         sword = [2, -8]
         shield = [-2, -4]
-        px.blt(locX, locY, img, 32, 48, w, h, px.COLOR_WHITE, scale=scale) #Player sprite
+        px.blt(locX, locY, img, 32, 48, w, h, px.COLOR_WHITE, scale=scale)
       case 'East':
         rotate = 90
         sword = [8, 2]
         shield = [4, -2]
-        px.blt(locX, locY, img, 0, 48, w, h, px.COLOR_WHITE, scale=scale) #Player sprite
+        px.blt(locX, locY, img, 0, 48, w, h, px.COLOR_WHITE, scale=scale)
       case 'West':
         rotate = 270
         sword = [-8, -2]
         shield = [-4, 2]
-        px.blt(locX, locY, img, 0, 48, -w, h, px.COLOR_WHITE, scale=scale) #Player sprite
+        px.blt(locX, locY, img, 0, 48, -w, h, px.COLOR_WHITE, scale=scale)
 
     for axis in range(2):
-      sword[axis] = sword[axis]*HEIGHT/9/16
+      try:
+        sword[axis] = sword[axis]*HEIGHT/9/16
+      except:
+        print(self.face)
       shield[axis] = shield[axis]*HEIGHT/9/16
 
     
