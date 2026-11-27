@@ -171,9 +171,12 @@ class Room(): #Room class
 
 
   def drawTile(self, x, y, HEIGHT, layer, shift) -> None: #Draws a tile
-    #      Initial shift     |Location shift    |Shift by a little over tile/2 to fix pos|Shift for room slide
-    locX = HEIGHT*7/9 + x*HEIGHT/9 + HEIGHT/18 - HEIGHT/9/8 + 2 - shift[0]
-    locY = HEIGHT     - y*HEIGHT/9 - HEIGHT/18 - HEIGHT/9/8 + 2 + shift[1]
+    #      Initial shift|Location shift|Shift for room slide|Shift to fix pos
+    # locX = HEIGHT*7/9 + x*HEIGHT/9 + HEIGHT/18 - HEIGHT/9/8 + 2 - shift[0]
+    # locY = HEIGHT     - y*HEIGHT/9 - HEIGHT/18 - HEIGHT/9/8 + 2 + shift[1]
+    scale = HEIGHT/9/16 #Width of a pixel
+    locX = HEIGHT*7/9 + x*HEIGHT/9 - shift[0] + (scale/2 - 0.5)*16
+    locY = HEIGHT     - y*HEIGHT/9 + shift[1] + (scale/2 - 0.5)*16 - HEIGHT/9
     match self.tileVars[x][y]:
       case 'Cold':
         img = 0
@@ -185,8 +188,7 @@ class Room(): #Room class
         img = 1
         print('Warning: tile version not found')
     w = 16 #16x16 tiles
-    h = 16 #16x16 tiles
-    scale = HEIGHT/9/16 #Width of a pixel
+    h = 16 #16x16 tile
 
     # Funny debug white dot - top left corner of tile
     # px.rect(HEIGHT*7/9 + x*HEIGHT/9 - shift[0], HEIGHT - y*HEIGHT/9 + shift[1], 1, 1, px.COLOR_WHITE)

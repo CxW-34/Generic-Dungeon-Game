@@ -4,6 +4,7 @@
 # Last updated - 27/11/2026
 
 # Imports
+from math import e, log
 import pyxel as px
 from sharedFunctions import posNeg
 
@@ -13,18 +14,24 @@ class Player:
     self.velocity = [0.0, 0.0]
     self.face = 'South'
     self.health = 8
+    self.damageCooldown = 0
     self.radius = 0.5
+    self.lastDoor = [72.0, 72.0]
     
     self.isDash = False
     self.dashTimer = 32
     self.maxDash = 32
     self.dashDirection = [0.0, 0.0]
 
+    self.friction = [0.01, 0.18]
+
     self.attackFrame = -1
     self.shield = False
 
-  def takeDamage(self, damage) -> None: #Fpr taking damage (to be used by enemy class)
-    self.health = max(0, self.health - damage)
+  def takeDamage(self, damage, ignoreCooldown=False) -> None: #Fpr taking damage (to be used by enemy class)
+    if not (self.damageCooldown and ignoreCooldown):
+      self.health = max(0, self.health - damage)
+      self.damageCooldown = 32
 
   def heal(self) -> None: #For healing the player
     self.health = min(8, self.health + 5)
@@ -39,13 +46,13 @@ class Player:
     
         self.dashDirection = [0.0, 0.0]
         if px.btn(px.KEY_UP):
-          self.dashDirection[1] += 0.5
+          self.dashDirection[1] += 0.06
         if px.btn(px.KEY_DOWN):
-          self.dashDirection[1] -= 0.5
+          self.dashDirection[1] -= 0.06
         if px.btn(px.KEY_LEFT):
-          self.dashDirection[0] -= 0.5
+          self.dashDirection[0] -= 0.06
         if px.btn(px.KEY_RIGHT):
-          self.dashDirection[0] += 0.5
+          self.dashDirection[0] += 0.06
 
         if self.dashDirection[0] and self.dashDirection[1]:
           for axis in range(2):
@@ -71,11 +78,17 @@ class Player:
 
     return walk
 
-  def doFriction(self) -> None: #Handles friction
+  def doFriction(self, room) -> None: #Handles friction
+    if self.tileOn(room)[0] == 'Hole' or self.isDash:
+      return
+    
+    match self.tileOn(room)[1]:
+      case 'Cold':
+        friction = self.friction[0]
+      case _:
+        friction = self.friction[1]
     for axis in range(2):
-      self.velocity[axis] = 0.7*self.velocity[axis]
-      if -0.02 < self.velocity[axis] < 0.02:
-        self.velocity[axis] = 0
+      self.velocity[axis] -= friction*self.velocity[axis]
 
   def changeFacing(self, walk) -> str: #Changes which way the player is facing based on where they are walking
     if not (self.shield or self.attackFrame > -1): #When holding the shield, the player keeps facing the same direction
@@ -90,27 +103,33 @@ class Player:
           return 'East'
     return self.face
 
-  def doMovement(self) -> None: #Handles player movement
+  def doMovement(self, room) -> None: #Handles player movement
     if px.btnp(px.KEY_C): #Enter/exit dash state
       self.doDash()
 
-    walk = [0, 0]
+    match self.tileOn(room)[1]:
+      case 'Cold':
+        friction = self.friction[0]*3
+      case _:
+        friction = self.friction[1]*4
+
     if self.isDash:
       for axis in range(2):
-        self.velocity[axis] += self.dashDirection[axis]
+        if self.tileOn(room)[1] == 'Cold':
+          self.velocity[axis] += self.dashDirection[axis]*friction*10 #Needs the extra boost on ice
+        else:
+          self.velocity[axis] += self.dashDirection[axis]*friction
     else: #If not dashing have usual controls
       walk = self.doWalk()
       for axis in range(2):
-        self.velocity[axis] += walk[axis]
+        self.velocity[axis] += walk[axis]*friction
+      self.face = self.changeFacing(walk) #Player faces direction of walking
 
 
     #Friction and movement
-    self.doFriction()
+    self.doFriction(room)
     for axis in range(2):
       self.location[axis] += self.velocity[axis]
-
-
-    self.face = self.changeFacing(walk) #Player faces direction of walking
 
 
   def doAttack(self) -> None: #Attacks if attacking
@@ -123,14 +142,20 @@ class Player:
     if self.attackFrame >= 0:
       self.shield = False
 
-  def doInputs(self) -> None: #Gets player input and moves player
+  def doInputs(self, room) -> None: #Gets player input and moves player
     if px.btn(px.KEY_SPACE):
       return
 
-    self.doMovement()
+    self.doMovement(room)
     self.doAttack()
     self.doShield()
 
+  def tileOn(self, room) -> list[str]: #Checks what tile type the player is on.
+    try:
+      loc = [int(self.location[0]//16), int(self.location[1]//16)]
+      return [room.tiles[loc[0]][loc[1]], room.tileVars[loc[0]][loc[1]]]
+    except:
+      return ['Tile', 'Warm']
 
   def nearestTiles(self, pos) -> list[list[int]]: #Finds the nearest tiles
     tile = [int(pos[0]), int(pos[1])]
@@ -163,7 +188,7 @@ class Player:
 
     for tile in nearest:
       if tile[0] in range(9) and tile[1] in range(9):
-        if room.tiles[tile[0]][tile[1]] in solidTiles or (room.tiles[tile[0]][tile[1]] == 'Hole' and not self.isDash): #Start box collision here
+        if room.tiles[tile[0]][tile[1]] in solidTiles: #Start box collision here
           tile = [tile[i] + 0.5 for i in range(2)]
 
           for axis in range(2):
@@ -172,8 +197,10 @@ class Player:
             if tile[axis] - 0.5 < pos[axis] < tile[axis] + 0.5:
               if tile[axis2] < pos[axis2] < tile[axis2] + self.radius + 0.5:
                 pos[axis2] = tile[axis2] + self.radius + 0.5
+                self.velocity[axis2] = 0
               elif tile[axis2] - 0.5 - self.radius < pos[axis2] < tile[axis2]:
                 pos[axis2] = tile[axis2] - self.radius - 0.5
+                self.velocity[axis2] = 0
 
           #If in range, move player by unit vector * (player rad - |vector|) according to pseudocode
           corners = [
@@ -189,15 +216,21 @@ class Player:
               magnitude = self.radius - self.dist(pos, corner)
 
               pos = [pos[i] - vector[i]*magnitude for i in range(2)]
-              px.rect(720*7/9 + corner[0]*720/9, 720 - corner[1]*720/9, 1, 1, px.COLOR_WHITE)
+              # px.rect(720*7/9 + corner[0]*720/9, 720 - corner[1]*720/9, 1, 1, px.COLOR_WHITE) #Not sure how this went unnoticed for 2 phases but I think it gets overdrawn by other stuff during the draw phase
 
     self.location = [pos[0]*16, pos[1]*16]
 
+    if self.tileOn(room)[0] == 'Hole' and not self.isDash:
+      self.location = self.lastDoor
+      self.velocity = [0.0, 0.0]
+      self.takeDamage(1, True)
+
 
   def update(self, gameMap) -> None:
-    self.doInputs()
+    self.doInputs(gameMap)
 
     self.doCollision(gameMap)
+    
     if self.isDash:
       self.dashTimer  -= 1
     else:
@@ -208,16 +241,24 @@ class Player:
     if self.attackFrame > -18:
       self.attackFrame -= 1
 
+    self.damageCooldown = max(0, self.damageCooldown - 1)
+
+    if self.location[0]%144 != self.location[0] or self.location[1]%144 != self.location[1]:
+      self.lastDoor = [self.location[0]%144, self.location[1]%144]
+
   def draw(self, HEIGHT, shift, layer) -> None:
     if layer != 2:
       return
-    
-    locX = HEIGHT*7/9 + self.location[0]*HEIGHT/9/16 - HEIGHT/9/8 + 2 - shift[0]
-    locY = HEIGHT     - self.location[1]*HEIGHT/9/16 - HEIGHT/9/8 + 2 + shift[1]
+    #      Initial shift|Location shift|Shift for room slide|Shift to fix pos
+    # locX = HEIGHT*7/9 + self.location[0]*HEIGHT/9/16 - HEIGHT/9/8 + 2 - shift[0]
+    # locY = HEIGHT     - self.location[1]*HEIGHT/9/16 - HEIGHT/9/8 + 2 + shift[1]
+    scale = HEIGHT/9/16 #Width of a pixel
+    locX = HEIGHT*7/9 + self.location[0]*HEIGHT/9/16 - shift[0] + (scale/2 - 0.5)*16 - HEIGHT/18
+    locY = HEIGHT     - self.location[1]*HEIGHT/9/16 + shift[1] + (scale/2 - 0.5)*16 - HEIGHT/18
     img = 0
     w = 16
     h = 16
-    scale = HEIGHT/9/16
+    
     rotate = 0
     
     match self.face:

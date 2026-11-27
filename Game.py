@@ -11,16 +11,16 @@ import random as rng
 from sharedFunctions import hash, posNeg, length
 from Room import Room
 from Player import Player
-from math import ceil
-from time import time
 
 #Classes
 class Game(): #Main Game class. Initialising a Game object runs the game
   def __init__(self):
     # constants
-    self.HEIGHT = 144*5
+    SCALE = 5
+    self.HEIGHT = 144*SCALE
     self.WIDTH = int(self.HEIGHT/9*16)
     self.TIMECONSTANT = 2.75
+    self.gameState = 'play'
 
     self.expectedLength = 15 # int(input('How long will the game be? (minutes): '))
 
@@ -251,31 +251,20 @@ class Game(): #Main Game class. Initialising a Game object runs the game
         shift[axis] += (self.player.location[axis] - 24)*self.HEIGHT/48
     return shift
 
-  def update(self) -> None:
-    self.devTools()
-    self.map[str(self.cRoom)].update()
-
-    self.player.update(self.map[str(self.cRoom)])
-
-    for axis in range(2):
-      if self.player.location[axis] > 144:
-        self.cRoom[axis] += 1
-        self.player.location[axis] -= 144
-      elif self.player.location[axis] < 0:
-        self.cRoom[axis] -= 1
-        self.player.location[axis] += 144
-
-  def draw(self) -> None:
-    px.cls(px.COLOR_BLACK)
-
-    #Main map room placed afterwards so if shift defaults to 0 the map is not shifted
+  def drawGame(self) -> None:
     for layer in range(1, 5):
       shift = self.getShift()
 
       if shift[0]:
-        self.map[str([self.cRoom[0] + posNeg(shift[0]), self.cRoom[1]])].draw(self.HEIGHT, [shift[0] - self.HEIGHT*posNeg(shift[0]), shift[1]], layer)
+        try:
+          self.map[str([self.cRoom[0] + posNeg(shift[0]), self.cRoom[1]])].draw(self.HEIGHT, [shift[0] - self.HEIGHT*posNeg(shift[0]), shift[1]], layer)
+        except:
+          pass
       if shift[1]:
-        self.map[str([self.cRoom[0], self.cRoom[1] + posNeg(shift[1])])].draw(self.HEIGHT, [shift[0], shift[1] - self.HEIGHT*posNeg(shift[1])], layer)
+        try:
+          self.map[str([self.cRoom[0], self.cRoom[1] + posNeg(shift[1])])].draw(self.HEIGHT, [shift[0], shift[1] - self.HEIGHT*posNeg(shift[1])], layer)
+        except:
+          pass
       try: #possible there is no room in the corner
         if shift[0] and shift[1]:
           self.map[str([self.cRoom[0] + posNeg(shift[0]), self.cRoom[1] + posNeg(shift[1])])].draw(self.HEIGHT, [shift[0] - self.HEIGHT*posNeg(shift[0]), shift[1] - self.HEIGHT*posNeg(shift[1])], layer)
@@ -287,3 +276,32 @@ class Game(): #Main Game class. Initialising a Game object runs the game
 
     self.drawMap()
     px.rect(0, 0, self.WIDTH*7/16, self.HEIGHT*2/9, px.COLOR_BLACK)
+
+
+  def update(self) -> None:
+    if self.gameState == 'play':
+      self.devTools()
+      self.map[str(self.cRoom)].update()
+
+      self.player.update(self.map[str(self.cRoom)])
+
+      for axis in range(2):
+        if self.player.location[axis] > 144:
+          self.cRoom[axis] += 1
+          self.player.location[axis] -= 144
+        elif self.player.location[axis] < 0:
+          self.cRoom[axis] -= 1
+          self.player.location[axis] += 144
+
+      if self.player.health == 0:
+        self.gameState = 'dead'
+
+  def draw(self) -> None:
+    px.cls(px.COLOR_BLACK)
+
+    if self.gameState == 'play':
+      self.drawGame()#Main map room placed afterwards so if shift defaults to 0 the map is not shifted
+    elif self.gameState == 'dead':
+      px.text(self.WIDTH/2, self.HEIGHT/2, 'YOU DIED', px.COLOR_RED)
+
+
