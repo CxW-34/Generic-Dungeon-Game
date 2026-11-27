@@ -1,7 +1,7 @@
 # Generic Dungeon Game - Game Class
 # Created - 31/10/2026
 # Owner - Xia34_
-# Last updated - 26/11/2026
+# Last updated - 27/11/2026
 
 # Imports
 from datetime import datetime
@@ -100,8 +100,8 @@ class Game(): #Main Game class. Initialising a Game object runs the game
 
   def generateVectorMap(self, scale) -> list[list[float]]: #Generates the vectorMap
     leftMost, rightMost, upMost, bottomMost = self.getBounds()
-    width = ceil((rightMost - leftMost)/scale) + 2
-    height = ceil((upMost - bottomMost)/scale) + 2
+    width = (rightMost - leftMost)*2
+    height = (upMost - bottomMost)*2
     hashMap = [[hash(str(x) + str(y) + str(scale) + self.seed) for y in range(height)] for x in range(width)]
     
     vectorMap = []
@@ -109,9 +109,9 @@ class Game(): #Main Game class. Initialising a Game object runs the game
       row = []
       for y in range(len(hashMap)): #Makes a singular random gradient vector
 
-        rng.seed = self.seed + str(x)
+        rng.seed = self.seed + str(x) + str(scale)
         vectorX = rng.random() - 0.5
-        rng.seed = self.seed + str(y)
+        rng.seed = self.seed + str(y) + str(scale)
         vectorY = rng.random() - 0.5
         size = (vectorX**2 + vectorY**2)**0.5
         vectorX = vectorX/size
@@ -141,9 +141,9 @@ class Game(): #Main Game class. Initialising a Game object runs the game
     
     displacement = [[relLoc[axis] - positions[i][axis]*scale for axis in range(2)] for i in range(4)]
 
-    return [self.dotProduct(displacement[i], vectorMap[int(positions[i][0]/scale)][int(positions[i][1]/scale/scale)]) for i in range(4)]
+    return [self.dotProduct(displacement[i], vectorMap[int(positions[i][0]/scale)][int(positions[i][1]/scale)]) for i in range(4)]
 
-  def interPolate(self, corners, x, y): #Interpolates between the four corners
+  def interPolate(self, corners, x, y) -> None: #Interpolates between the four corners
     top = corners[0] + (corners[1] - corners[0]) * (0.5 + ((x - 0.5)/(0.5 + abs(x - 0.5))))
     bottom = corners[2] + (corners[3] - corners[2]) * (0.5 + ((x - 0.5)/(0.5 + abs(x - 0.5))))
     return bottom + (top - bottom) * (0.5 + ((y - 0.5)/(0.5 + abs(y - 0.5))))
@@ -173,7 +173,7 @@ class Game(): #Main Game class. Initialising a Game object runs the game
             self.map[room].tileVars[x][y] = 'Warm'
 
 
-  def getBounds(self) -> list[int]: #Gets the bounds of the map in integer room locations
+  def getBounds(self) -> tuple[int, int, int, int]: #Gets the bounds of the map in integer room locations
     rightMost = 0
     leftMost = 0
     upMost = 0

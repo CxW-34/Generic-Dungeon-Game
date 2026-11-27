@@ -1,7 +1,7 @@
 # Generic Dungeon Game - Player Class
 # Created - 31/10/2026
 # Owner - Xia34_
-# Last updated - 26/11/2026
+# Last updated - 27/11/2026
 
 # Imports
 import pyxel as px
@@ -10,7 +10,7 @@ from sharedFunctions import posNeg
 class Player:
   def __init__(self):
     self.location = [72.0, 72.0] #Shown as player centre
-    self.velocity = [0, 0]
+    self.velocity = [0.0, 0.0]
     self.face = 'South'
     self.health = 8
     self.radius = 0.5
@@ -94,10 +94,10 @@ class Player:
     if px.btnp(px.KEY_C): #Enter/exit dash state
       self.doDash()
 
+    walk = [0, 0]
     if self.isDash:
       for axis in range(2):
         self.velocity[axis] += self.dashDirection[axis]
-        walk = [0, 0]
     else: #If not dashing have usual controls
       walk = self.doWalk()
       for axis in range(2):
@@ -219,6 +219,7 @@ class Player:
     h = 16
     scale = HEIGHT/9/16
     rotate = 0
+    
     match self.face:
       case 'North':
         rotate = 0
@@ -235,7 +236,7 @@ class Player:
         sword = [8, 2]
         shield = [4, -2]
         px.blt(locX, locY, img, 0, 48, w, h, px.COLOR_WHITE, scale=scale)
-      case 'West':
+      case _: #West
         rotate = 270
         sword = [-8, -2]
         shield = [-4, 2]
